@@ -192,6 +192,21 @@ target_include_directories(edge_v3 PUBLIC
 target_link_libraries(edge_v3 uip c-ares libcurl)
 target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
 
+set(N2N_V23_TRANSFORM_SPECK_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/n2n_v2_ipv6/transform_speck.c")
+set(N2N_V23_TRANSFORM_SPECK_PATCHED "${CMAKE_CURRENT_BINARY_DIR}/n2n_v2_ipv6_transform_speck_patched.c")
+file(READ "${N2N_V23_TRANSFORM_SPECK_SOURCE}" N2N_V23_TRANSFORM_SPECK_CONTENT)
+string(REPLACE
+        "speck_ctr(outbuf + idx, inbuf, in_len, nonce, &priv->ctx);"
+        "#if defined(SPECK_CTX_BYVAL)\n    speck_ctr(outbuf + idx, inbuf, in_len, nonce, priv->ctx);\n#else\n    speck_ctr(outbuf + idx, inbuf, in_len, nonce, &priv->ctx);\n#endif"
+        N2N_V23_TRANSFORM_SPECK_CONTENT
+        "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
+string(REPLACE
+        "speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, &priv->ctx);"
+        "#if defined(SPECK_CTX_BYVAL)\n    speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, priv->ctx);\n#else\n    speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, &priv->ctx);\n#endif"
+        N2N_V23_TRANSFORM_SPECK_CONTENT
+        "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
+file(WRITE "${N2N_V23_TRANSFORM_SPECK_PATCHED}" "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
+
 add_library(edge_v23 SHARED
         src/main/cpp/n2n_v2_ipv6/n2n.c
         src/main/cpp/n2n_v2_ipv6/wire.c
@@ -206,7 +221,7 @@ add_library(edge_v23 SHARED
         src/main/cpp/n2n_v2_ipv6/transform_tf.c
         src/main/cpp/n2n_v2_ipv6/transform_aes.c
         src/main/cpp/n2n_v2_ipv6/transform_cc20.c
-        src/main/cpp/n2n_v2_ipv6/transform_speck.c
+        ${N2N_V23_TRANSFORM_SPECK_PATCHED}
         src/main/cpp/n2n_v2_ipv6/n2n_keyfile.c
         src/main/cpp/n2n_v2_ipv6/minilzo.c
         src/main/cpp/n2n_v2_ipv6/upnp.c
