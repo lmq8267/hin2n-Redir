@@ -130,7 +130,7 @@ public class N2NService extends VpnService {
         mN2nSettingInfo = setting.getParcelable("n2nSettingInfo");
 
         int vpnServiceFd = -1;
-        if (mN2nSettingInfo.getIpMode() == 0) {
+        if (mN2nSettingInfo.getIpMode() == 0 && mN2nSettingInfo.getVersion() != 4) {
             vpnServiceFd = EstablishVpnService(mN2nSettingInfo.getIp(), getIpAddrPrefixLength(mN2nSettingInfo.getNetmask()));
             if (vpnServiceFd < 0) {
                 return super.onStartCommand(intent, flags, startId);

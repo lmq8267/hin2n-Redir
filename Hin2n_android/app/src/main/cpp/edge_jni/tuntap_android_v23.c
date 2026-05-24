@@ -5,12 +5,110 @@
 #include "n2n.h"
 
 #ifdef __ANDROID_NDK__
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <jni.h>
+#include <string.h>
 #include <unistd.h>
 #include <tun2tap/tun2tap.h>
 #include <edge_jni/edge_jni.h>
 
+static int clear_nonblock(int fd) {
+    int val;
+
+    if (fd < 0) {
+        return -1;
+    }
+
+    val = fcntl(fd, F_GETFL);
+    if (val == -1) {
+        return -1;
+    }
+    if ((val & O_NONBLOCK) == O_NONBLOCK) {
+        val &= ~O_NONBLOCK;
+        if (fcntl(fd, F_SETFL, val) == -1) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+static int establish_vpn_service(const struct tuntap_config *config) {
+    JNIEnv *env = NULL;
+    jclass vpn_service_cls;
+    jmethodID mid;
+    jstring j_ip;
+    char ip_str[INET_ADDRSTRLEN];
+    int vpn_fd;
+    int attached = 0;
+
+    if (!g_status || !g_status->jvm || !g_status->jobj_service || !config) {
+        return -1;
+    }
+
+    if ((*g_status->jvm)->GetEnv(g_status->jvm, (void **)&env, JNI_VERSION_1_1) != JNI_OK || !env) {
+        if ((*g_status->jvm)->AttachCurrentThread(g_status->jvm, &env, NULL) != JNI_OK || !env) {
+            return -1;
+        }
+        attached = 1;
+    }
+
+    vpn_service_cls = (*env)->GetObjectClass(env, g_status->jobj_service);
+    if (!vpn_service_cls) {
+        if (attached) {
+            (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
+        }
+        return -1;
+    }
+
+    mid = (*env)->GetMethodID(env, vpn_service_cls, "EstablishVpnService", "(Ljava/lang/String;I)I");
+    if (!mid) {
+        (*env)->DeleteLocalRef(env, vpn_service_cls);
+        if (attached) {
+            (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
+        }
+        return -1;
+    }
+
+    if (!inet_ntop(AF_INET, &config->ip_addr, ip_str, sizeof(ip_str))) {
+        strncpy(ip_str, g_status->cmd.ip_addr, sizeof(ip_str) - 1);
+        ip_str[sizeof(ip_str) - 1] = '\0';
+    }
+
+    j_ip = (*env)->NewStringUTF(env, ip_str);
+    if (!j_ip) {
+        (*env)->DeleteLocalRef(env, vpn_service_cls);
+        if (attached) {
+            (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
+        }
+        return -1;
+    }
+
+    vpn_fd = (*env)->CallIntMethod(env, g_status->jobj_service, mid, j_ip, (jint)config->ip_prefixlen);
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+        vpn_fd = -1;
+    }
+
+    (*env)->DeleteLocalRef(env, j_ip);
+    (*env)->DeleteLocalRef(env, vpn_service_cls);
+    if (attached) {
+        (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
+    }
+
+    return vpn_fd;
+}
+
 int tuntap_open(tuntap_dev *device, struct tuntap_config *config) {
-    if (!device || !config || !g_status || g_status->cmd.vpn_fd < 0) {
+    if (!device || !config || !g_status) {
+        return -1;
+    }
+
+    if (g_status->cmd.vpn_fd < 0) {
+        g_status->cmd.vpn_fd = establish_vpn_service(config);
+    }
+    if (g_status->cmd.vpn_fd < 0 || clear_nonblock(g_status->cmd.vpn_fd) < 0) {
         return -1;
     }
 
