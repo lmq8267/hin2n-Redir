@@ -90,12 +90,18 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private long mSaveId;
     private ArrayList<String> mTraceLevelList;
     private CheckBox mLocalIpCheckBox;
+    private LinearLayout mV23AddressFamilyLayout;
+    private RadioGroup mV23AddressFamilyGroup;
     private RadioGroup mVersionGroup;
     private CheckBox mUseHttpTunnelCheckBox;
     private RadioButton mVersionV1;
     private RadioButton mVersionV2;
     private RadioButton mVersionV2s;
     private RadioButton mVersionV3;
+    private RadioButton mVersionV23;
+    private RadioButton mV23AddressFamilyAuto;
+    private RadioButton mV23AddressFamilyIpv4;
+    private RadioButton mV23AddressFamilyIpv6;
     private TextInputLayout mGatewayIp;
     private TextInputLayout mDnsServer;
     private LinearLayout mEncryptionBox;
@@ -147,6 +153,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mVersionV2 = (RadioButton) findViewById(R.id.rb_v2);
         mVersionV2s = (RadioButton) findViewById(R.id.rb_v2s);
         mVersionV3 = (RadioButton) findViewById(R.id.rb_v3);
+        mVersionV23 = (RadioButton) findViewById(R.id.rb_v23);
+        mVersionV23.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SettingDetailsActivity.this, WebViewActivity.class);
+                intent.putExtra(WebViewActivity.WEB_VIEW_TYPE, WebViewActivity.TYPE_WEB_VIEW_V23);
+                startActivity(intent);
+            }
+        });
 
         mIpAddressTIL = (TextInputLayout) findViewById(R.id.til_ip_address);
         mNetMaskTIL = (TextInputLayout) findViewById(R.id.til_net_mask);
@@ -162,7 +177,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                 if (b) {
-                    mIpAddressTIL.getEditText().setText("0.0.0.0");
+                    mIpAddressTIL.getEditText().setText(R.string.item_get_ip_from_supernode_ip);
                     mNetMaskTIL.getEditText().setText(R.string.item_default_netmask);
                     mIpAddressTIL.setVisibility(View.GONE);
                     mNetMaskTIL.setVisibility(View.GONE);
@@ -205,6 +220,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
         });
         mHolePunchInterval = (TextInputLayout) findViewById(R.id.til_hole_punch_Interval);
+        mV23AddressFamilyLayout = (LinearLayout) findViewById(R.id.ll_v23_address_family);
+        mV23AddressFamilyGroup = (RadioGroup) findViewById(R.id.rg_v23_address_family);
+        mV23AddressFamilyAuto = (RadioButton) findViewById(R.id.rb_v23_addr_auto);
+        mV23AddressFamilyIpv4 = (RadioButton) findViewById(R.id.rb_v23_addr_ipv4);
+        mV23AddressFamilyIpv6 = (RadioButton) findViewById(R.id.rb_v23_addr_ipv6);
         mResolveSnLayout = (RelativeLayout)  findViewById(R.id.rl_resolve_super_node_ip_check_box);
         mResoveSupernodeIPCheckBox = (CheckBox) findViewById(R.id.resove_super_node_ip_check_box);
         mLocalPort = (TextInputLayout) findViewById(R.id.til_local_port);
@@ -278,14 +298,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mAllowRoutinCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_allowrouting)));
             mAcceptMuticastCheckBox.setChecked(!Boolean.valueOf(getString(R.string.item_default_dropmuticast)));
             mUseHttpTunnelCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_usehttptunnel)));
+            mV23AddressFamilyAuto.setChecked(true);
             mTraceLevelSpinner.setSelection(Integer.valueOf(getString(R.string.item_default_tracelevel)) - 1);
             mMoreSettingCheckBox.setChecked(false);
             mGatewayIp.getEditText().setText(R.string.item_default_gateway_ip);
-            mDnsServer.getEditText().setText("");
+            mDnsServer.getEditText().setText(null);
             mEncryptionMode.setSelection(encAdapter.getPosition("Twofish"));
             mHeaderEncCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_headerenc)));
 
-            mDevDescTIL.getEditText().setText("");
+            mDevDescTIL.getEditText().setText(null);
 
             mSaveBtn.setVisibility(View.VISIBLE);
             mButtons.setVisibility(View.GONE);
@@ -307,6 +328,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                     break;
                 case 3:
                     mVersionV3.setChecked(true);
+                    break;
+                case 4:
+                    mVersionV23.setChecked(true);
+                    break;
                 default:
                     break;
             }
@@ -334,6 +359,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
             mHolePunchInterval.getEditText().setText(String.valueOf(mN2NSettingModel.getHolePunchInterval()));
             mResoveSupernodeIPCheckBox.setChecked(mN2NSettingModel.getResoveSupernodeIP());
+            setV23AddressFamilySelection(mN2NSettingModel.getResoveSupernodeIP(), mN2NSettingModel.getUseHttpTunnel());
             mLocalPort.getEditText().setText(String.valueOf(mN2NSettingModel.getLocalPort()));
             mAllowRoutinCheckBox.setChecked(mN2NSettingModel.getAllowRouting());
             mHeaderEncCheckBox.setChecked(mN2NSettingModel.getHeaderEnc());
@@ -381,6 +407,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mHolePunchInterval.setVisibility(View.GONE);
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
+                mV23AddressFamilyLayout.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.GONE);
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
@@ -400,6 +427,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mHolePunchInterval.setVisibility(View.GONE);
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
+                mV23AddressFamilyLayout.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.VISIBLE);
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
@@ -417,8 +445,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mSuperNodeBackup.setVisibility(View.VISIBLE);
                 mAcceptMuticastView.setVisibility(View.VISIBLE);
                 mHolePunchInterval.setVisibility(View.VISIBLE);
+                mLocalIP.setHint(getString(R.string.local_ip));
                 mLocalIP.setVisibility(View.VISIBLE);
                 mLocalIpCheckBox.setVisibility(View.VISIBLE);
+                mV23AddressFamilyLayout.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.GONE);
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
@@ -441,6 +471,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mHolePunchInterval.setVisibility(View.GONE);
                 mLocalIP.setVisibility(View.GONE);
                 mLocalIpCheckBox.setVisibility(View.GONE);
+                mV23AddressFamilyLayout.setVisibility(View.GONE);
                 mGatewayIp.setVisibility(View.VISIBLE);
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
@@ -448,6 +479,28 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mHeaderEncCheckBox.setVisibility(View.VISIBLE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v3);
+                }
+                break;
+            case R.id.rb_v23:
+                mUseHttpTunnelCheckBox.setVisibility(View.GONE);
+                mGetIpFromSupernodeView.setVisibility(View.GONE);
+                mGetIpFromSupernodeCheckBox.setChecked(false);
+                mDevDescTIL.setVisibility(View.GONE);
+                mSuperNodeBackup.setVisibility(View.VISIBLE);
+                mAcceptMuticastView.setVisibility(View.VISIBLE);
+                mHolePunchInterval.setVisibility(View.GONE);
+                mLocalIP.setHint(getString(R.string.v23_ipv6_address));
+                mLocalIP.setEnabled(true);
+                mLocalIP.setVisibility(View.VISIBLE);
+                mLocalIpCheckBox.setVisibility(View.GONE);
+                mV23AddressFamilyLayout.setVisibility(View.VISIBLE);
+                mGatewayIp.setVisibility(View.VISIBLE);
+                mDnsServer.setVisibility(View.VISIBLE);
+                mResolveSnLayout.setVisibility(View.GONE);
+                mEncryptionBox.setVisibility(View.VISIBLE);
+                mHeaderEncCheckBox.setVisibility(View.GONE);
+                if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
+                    mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v23);
                 }
                 break;
             default:
@@ -460,10 +513,36 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 supernode.equals(getString(R.string.item_default_supernode_v1)) ||
                 supernode.equals(getString(R.string.item_default_supernode_v2)) ||
                 supernode.equals(getString(R.string.item_default_supernode_v2s)) ||
-                supernode.equals(getString(R.string.item_default_supernode_v3))) {
+                supernode.equals(getString(R.string.item_default_supernode_v3)) ||
+                supernode.equals(getString(R.string.item_default_supernode_v23))) {
             return true;
         }
         return false;
+    }
+
+    private void setV23AddressFamilySelection(boolean ipv4, boolean ipv6) {
+        if (ipv6) {
+            mV23AddressFamilyIpv6.setChecked(true);
+        } else if (ipv4) {
+            mV23AddressFamilyIpv4.setChecked(true);
+        } else {
+            mV23AddressFamilyAuto.setChecked(true);
+        }
+    }
+
+    private boolean isV23AddressFamilyIpv4() {
+        return getN2nVersion() == 4 && mV23AddressFamilyGroup.getCheckedRadioButtonId() == R.id.rb_v23_addr_ipv4;
+    }
+
+    private boolean isV23AddressFamilyIpv6() {
+        return getN2nVersion() == 4 && mV23AddressFamilyGroup.getCheckedRadioButtonId() == R.id.rb_v23_addr_ipv6;
+    }
+
+    private String getLocalIpValue() {
+        if (getN2nVersion() == 4) {
+            return mLocalIP.getEditText().getText().toString();
+        }
+        return mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString();
     }
 
     @Override
@@ -494,10 +573,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         mDevDescTIL.getEditText().getText().toString(),
                         mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
                         mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
-                        Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
-                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
+                        Integer.valueOf(mMtu.getEditText().getText().toString()), getLocalIpValue(),
+                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), getN2nVersion() == 4 ? isV23AddressFamilyIpv4() : mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
+                        !mAcceptMuticastCheckBox.isChecked(), getN2nVersion() == 4 ? isV23AddressFamilyIpv6() : mUseHttpTunnelCheckBox.isChecked(),
                         mTraceLevelSpinner.getSelectedItemPosition(), !hasSelected,
                         mGatewayIp.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
@@ -547,10 +626,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         mDevDescTIL.getEditText().getText().toString(),
                         mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
                         mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
-                        Integer.valueOf(mMtu.getEditText().getText().toString()), mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString(),
-                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), mResoveSupernodeIPCheckBox.isChecked(),
+                        Integer.valueOf(mMtu.getEditText().getText().toString()), getLocalIpValue(),
+                        Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), getN2nVersion() == 4 ? isV23AddressFamilyIpv4() : mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
-                        !mAcceptMuticastCheckBox.isChecked(), mUseHttpTunnelCheckBox.isChecked(),
+                        !mAcceptMuticastCheckBox.isChecked(), getN2nVersion() == 4 ? isV23AddressFamilyIpv6() : mUseHttpTunnelCheckBox.isChecked(),
                         mTraceLevelSpinner.getSelectedItemPosition(), mN2NSettingModel.getIsSelcected(),
                         mGatewayIp.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
@@ -736,8 +815,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
          * 高级配置参数检查
          */
         int ver = getN2nVersion();
-        // backup supernode => v2, v2s
-        if ((ver == 1 || ver == 2) && !TextUtils.isEmpty(mSuperNodeBackup.getEditText().getText().toString()) && !EdgeCmd.checkSupernode(mSuperNodeBackup.getEditText().getText().toString())) {
+        // backup supernode => v2, v2s, v23
+        if ((ver == 1 || ver == 2 || ver == 4) && !TextUtils.isEmpty(mSuperNodeBackup.getEditText().getText().toString()) && !EdgeCmd.checkSupernode(mSuperNodeBackup.getEditText().getText().toString())) {
             mSuperNodeBackup.setError(mSuperNodeBackup.getHint() + " format is incorrect");
             mSuperNodeBackup.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
@@ -769,6 +848,18 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         // localIP => v2s
         if (ver == 2 && !mLocalIpCheckBox.isChecked()) {
             if (!TextUtils.isEmpty(mLocalIP.getEditText().getText().toString()) && !EdgeCmd.checkIPV4(mLocalIP.getEditText().getText().toString())) {
+                mLocalIP.setError(mLocalIP.getHint() + " format is incorrect");
+                mLocalIP.getEditText().requestFocus();
+                mMoreSettingCheckBox.setChecked(true);
+                mMoreSettingView.setVisibility(View.VISIBLE);
+                return false;
+            } else {
+                mLocalIP.setErrorEnabled(false);
+            }
+        }
+        // IPv6 address/prefix => v23 -A
+        if (ver == 4 && !TextUtils.isEmpty(mLocalIP.getEditText().getText().toString())) {
+            if (!EdgeCmd.checkIPV6Prefix(mLocalIP.getEditText().getText().toString())) {
                 mLocalIP.setError(mLocalIP.getHint() + " format is incorrect");
                 mLocalIP.getEditText().requestFocus();
                 mMoreSettingCheckBox.setChecked(true);
@@ -821,6 +912,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 return 2;
             case R.id.rb_v3:
                 return 3;
+            case R.id.rb_v23:
+                return 4;
             default:
                 return -1;
         }
@@ -846,8 +939,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onErrorEvent(ErrorEvent event) {
         new SweetAlertDialog(this, SweetAlertDialog.ERROR_TYPE)
-                .setTitleText("Oops...")
-                .setContentText("Something went wrong!")
+                .setTitleText(getString(R.string.dialog_error_title))
+                .setContentText(getString(R.string.dialog_error_content))
                 .show();
     }
 }

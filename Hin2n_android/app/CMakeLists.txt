@@ -98,6 +98,7 @@ include_directories(src/main/cpp src/main/cpp/edge_jni src/main/cpp/slog src/mai
 
 add_library(edge_jni SHARED src/main/cpp/edge_jni/edge_jni.c)
 target_link_libraries(edge_jni edge_v3)
+target_link_libraries(edge_jni edge_v23)
 target_link_libraries(edge_jni edge_v2s)
 target_link_libraries(edge_jni edge_v2)
 target_link_libraries(edge_jni edge_v1)
@@ -190,6 +191,39 @@ target_include_directories(edge_v3 PUBLIC
         )
 target_link_libraries(edge_v3 uip c-ares libcurl)
 target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
+
+add_library(edge_v23 SHARED
+        src/main/cpp/n2n_v2_ipv6/n2n.c
+        src/main/cpp/n2n_v2_ipv6/wire.c
+        src/main/cpp/n2n_v2_ipv6/version.c
+        src/main/cpp/n2n_v2_ipv6/aes.c
+        src/main/cpp/n2n_v2_ipv6/sha.c
+        src/main/cpp/n2n_v2_ipv6/twofish.c
+        src/main/cpp/n2n_v2_ipv6/speck.c
+        src/main/cpp/n2n_v2_ipv6/pearson.c
+        src/main/cpp/n2n_v2_ipv6/cc20.c
+        src/main/cpp/n2n_v2_ipv6/transform_null.c
+        src/main/cpp/n2n_v2_ipv6/transform_tf.c
+        src/main/cpp/n2n_v2_ipv6/transform_aes.c
+        src/main/cpp/n2n_v2_ipv6/transform_cc20.c
+        src/main/cpp/n2n_v2_ipv6/transform_speck.c
+        src/main/cpp/n2n_v2_ipv6/n2n_keyfile.c
+        src/main/cpp/n2n_v2_ipv6/minilzo.c
+        src/main/cpp/n2n_v2_ipv6/upnp.c
+        src/main/cpp/n2n_v2_ipv6/edge.c
+        src/main/cpp/edge_jni/tuntap_android_v23.c
+        src/main/cpp/edge_jni/edge_android_v23.c
+        src/main/cpp/edge_jni/ifaddrs_android_v23.c
+        )
+target_compile_definitions(edge_v23 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
+set_source_files_properties(src/main/cpp/n2n_v2_ipv6/edge.c PROPERTIES COMPILE_DEFINITIONS "main=edge_v23_main")
+set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket")
+target_include_directories(edge_v23 PUBLIC
+        src/main/cpp/n2n_v2_ipv6
+        src/main/cpp/tun2tap
+        src/main/cpp/uip
+        )
+target_link_libraries(edge_v23 uip log)
 
 add_library(edge_v1 SHARED
                 src/main/cpp/n2n_v1/edge.c

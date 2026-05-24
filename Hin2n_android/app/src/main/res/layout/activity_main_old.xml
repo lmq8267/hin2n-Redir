@@ -72,7 +72,7 @@
                     android:layout_marginLeft="10dp"
                     android:paddingBottom="10dp"
                     android:paddingTop="10dp"
-                    android:text="--null--"
+                    android:text="@string/null_placeholder"
                     android:textSize="18dp"/>
 
 

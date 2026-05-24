@@ -230,7 +230,7 @@ public class ListActivity extends BaseActivity {
                 SwipeMenuItem copyItem = new SwipeMenuItem(getApplicationContext());
                 copyItem.setBackground(new ColorDrawable(Color.rgb(0xC9, 0xC9, 0xCE)));
                 copyItem.setWidth(N2nTools.dp2px(ListActivity.this, 70));
-                copyItem.setTitle("Copy");
+                copyItem.setTitle(getString(R.string.action_copy));
                 copyItem.setTitleSize(18);
                 copyItem.setTitleColor(Color.WHITE);
                 menu.addMenuItem(copyItem);
@@ -238,7 +238,7 @@ public class ListActivity extends BaseActivity {
                 SwipeMenuItem deleteItem = new SwipeMenuItem(getApplicationContext());
                 deleteItem.setBackground(new ColorDrawable(Color.rgb(0xF9, 0x3F, 0x25)));
                 deleteItem.setWidth(N2nTools.dp2px(ListActivity.this, 70));
-                deleteItem.setTitle("Delete");
+                deleteItem.setTitle(getString(R.string.action_delete));
                 deleteItem.setTitleSize(18);
                 deleteItem.setTitleColor(Color.WHITE);
                 menu.addMenuItem(deleteItem);
@@ -428,6 +428,6 @@ public class ListActivity extends BaseActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onErrorEvent(ErrorEvent event) {
-        Toast.makeText(mContext, "~_~Error~_~", Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, R.string.toast_error, Toast.LENGTH_SHORT).show();
     }
 }

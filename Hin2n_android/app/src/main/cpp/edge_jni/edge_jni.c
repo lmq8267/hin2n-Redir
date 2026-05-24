@@ -85,6 +85,10 @@ JNIEXPORT jboolean JNICALL Java_wang_switchy_hin2n_service_N2NService_startEdge(
             status.start_edge = start_edge_v3;
             status.stop_edge = stop_edge_v3;
             break;
+        case EDGE_TYPE_V23:
+            status.start_edge = start_edge_v23;
+            status.stop_edge = stop_edge_v23;
+            break;
         default:
             ResetEdgeStatus(env, 1 /* cleanup*/);
             return JNI_FALSE;
@@ -173,7 +177,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
     {
         jint jiEdgeType = (*env)->GetIntField(env, jcmd,
                                               (*env)->GetFieldID(env, cls, "edgeType", "I"));
-        if (jiEdgeType < EDGE_TYPE_V1 || jiEdgeType > EDGE_TYPE_V3) {
+        if (jiEdgeType < EDGE_TYPE_V1 || jiEdgeType > EDGE_TYPE_V23) {
             return 1;
         }
         status.edge_type = jiEdgeType;
@@ -296,7 +300,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         }
     }
     // encKeyFile
-    if (EDGE_TYPE_V2 <= status.edge_type && status.edge_type <= EDGE_TYPE_V3) {
+    if (EDGE_TYPE_V2 <= status.edge_type && status.edge_type <= EDGE_TYPE_V23) {
         jstring jsEncKeyFile = (*env)->GetObjectField(env, jcmd,
                                                       (*env)->GetFieldID(env, cls, "encKeyFile",
                                                                          "Ljava/lang/String;"));
@@ -339,7 +343,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
 #endif /* #ifndef NDEBUG */
     }
     // localIP
-    if (status.edge_type == EDGE_TYPE_V2S) {
+    if (status.edge_type == EDGE_TYPE_V2S || status.edge_type == EDGE_TYPE_V23) {
         jstring jsLocalIP = (*env)->GetObjectField(env, jcmd,
                                                    (*env)->GetFieldID(env, cls, "localIP",
                                                                       "Ljava/lang/String;"));

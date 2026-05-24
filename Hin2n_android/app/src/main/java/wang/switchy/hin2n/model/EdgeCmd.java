@@ -2,9 +2,10 @@ package wang.switchy.hin2n.model;
 
 import java.util.Random;
 import java.util.Vector;
+import java.net.InetAddress;
 
 public class EdgeCmd {
-    public int edgeType;    // 0: v1, 1: v2, 2: v2s 3: v3
+    public int edgeType;    // 0: v1, 1: v2, 2: v2s, 3: v3, 4: v23
     public int ipMode;
     public String ipAddr;
     public String ipNetmask;
@@ -122,7 +123,9 @@ public class EdgeCmd {
         if (!checkInt(mtu, 46, 1500)) {
             invalids.add("mut");
         }
-        if (localIP != null && !localIP.isEmpty() && !checkIPV4(localIP)) {
+        if (localIP != null && !localIP.isEmpty()
+                && !("auto".equals(localIP) && edgeType == 2)
+                && !((edgeType == 4 && checkIPV6Prefix(localIP)) || (edgeType != 4 && checkIPV4(localIP)))) {
             invalids.add("localIP");
         }
         if (!checkInt(holePunchInterval, 10, 120)) {
@@ -199,8 +202,28 @@ public class EdgeCmd {
         return true;
     }
 
+    public static boolean checkIPV6Prefix(String ipPrefix) {
+        if (ipPrefix == null || ipPrefix.isEmpty()) {
+            return false;
+        }
+        String[] split = ipPrefix.split("/", -1);
+        if (split.length != 2 || split[0].isEmpty() || split[1].isEmpty()) {
+            return false;
+        }
+        try {
+            InetAddress addr = InetAddress.getByName(split[0]);
+            if (addr.getAddress().length != 16) {
+                return false;
+            }
+            int prefix = Integer.parseInt(split[1]);
+            return prefix >= 0 && prefix <= 128 && String.valueOf(prefix).equals(split[1]);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public static boolean checkSupernode(String supernode) {
-        if (supernode == null || supernode.isEmpty() || supernode.length() > 47) {
+        if (supernode == null || supernode.isEmpty()) {
             return false;
         }
         // 忽略协议前缀大小写，支持 txt:、txt://、http:、http://、https:、https:// 写法。
@@ -209,12 +232,36 @@ public class EdgeCmd {
                 || supernode.regionMatches(true, 0, "https:", 0, 6)) {
             return true;
         }
-        String[] split = supernode.split(":");
-        if (split == null || split.length != 2 || split[0].isEmpty()) {
+        if (supernode.length() > 47) {
             return false;
         }
-        int n = Integer.parseInt(split[1]);
-        if (n < 0 || n > 65535 || !String.valueOf(n).equals(split[1])) {
+        String host;
+        String port;
+        if (supernode.charAt(0) == '[') {
+            int end = supernode.indexOf(']');
+            if (end <= 1 || end + 2 != supernode.length() || supernode.charAt(end + 1) != ':') {
+                return false;
+            }
+            host = supernode.substring(1, end);
+            port = supernode.substring(end + 2);
+        } else {
+            int colon = supernode.lastIndexOf(':');
+            if (colon <= 0 || colon == supernode.length() - 1 || supernode.indexOf(':') != colon) {
+                return false;
+            }
+            host = supernode.substring(0, colon);
+            port = supernode.substring(colon + 1);
+        }
+        if (host.isEmpty() || port.isEmpty()) {
+            return false;
+        }
+        int n;
+        try {
+            n = Integer.parseInt(port);
+        } catch (Exception e) {
+            return false;
+        }
+        if (n < 0 || n > 65535 || !String.valueOf(n).equals(port)) {
             return false;
         }
 

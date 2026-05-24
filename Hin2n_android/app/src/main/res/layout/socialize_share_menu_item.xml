@@ -19,7 +19,7 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:singleLine="true"
-        android:text="未知"
+        android:text="@string/unknown"
         android:textSize="12sp" />
 
 </LinearLayout>

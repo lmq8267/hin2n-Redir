@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.core.content.FileProvider;
 import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -32,6 +34,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import wang.switchy.hin2n.Hin2nApplication;
@@ -155,7 +158,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View view) {
                 if (mCurrentSettingName.getText().equals(getResources().getString(R.string.no_setting))) {
-                    Toast.makeText(mContext, "no setting selected", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, R.string.toast_no_setting_selected, Toast.LENGTH_SHORT).show();
                     return;
                 }
 
@@ -213,7 +216,35 @@ public class MainActivity extends BaseActivity {
         mTermAdapter = new TermAdapter(null);
         mRecyclerView.setAdapter(mTermAdapter);
         mTermAdapter.setNewInstance(term);
+
+        TextView shareLog = (TextView) findViewById(R.id.tv_share_log);
+        shareLog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                shareCurrentLog();
+            }
+        });
         initLeftMenu();
+    }
+
+    private void shareCurrentLog() {
+        if (TextUtils.isEmpty(logTxtPath)) {
+            Toast.makeText(this, R.string.share_log_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        File logFile = new File(logTxtPath);
+        if (!logFile.exists() || !logFile.isFile()) {
+            Toast.makeText(this, R.string.share_log_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Uri logUri = FileProvider.getUriForFile(this, getPackageName() + ".fileProvider", logFile);
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_STREAM, logUri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, getString(R.string.share_log_title)));
     }
 
     private void initLeftMenu() {
@@ -239,7 +270,7 @@ public class MainActivity extends BaseActivity {
                             .onDenied(new Action<List<String>>() {
                                 @Override
                                 public void onAction(List<String> data) {
-                                    Toast.makeText(MainActivity.this, "I NEED PERMISSIONS!", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(MainActivity.this, R.string.toast_need_permissions, Toast.LENGTH_SHORT).show();
                                 }
                             }).start();
                 } else {

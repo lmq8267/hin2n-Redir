@@ -10,7 +10,7 @@
 #include <jni.h>
 #include <pthread.h>
 
-#define EDGE_CMD_IPSTR_SIZE 16
+#define EDGE_CMD_IPSTR_SIZE 64
 #define EDGE_CMD_SUPERNODES_NUM 2
 #define EDGE_CMD_SN_HOST_SIZE 48
 #define EDGE_CMD_MACNAMSIZ 18
@@ -60,7 +60,8 @@ enum
     EDGE_TYPE_V1,
     EDGE_TYPE_V2,
     EDGE_TYPE_V2S,
-    EDGE_TYPE_V3
+    EDGE_TYPE_V3,
+    EDGE_TYPE_V23
 };
 
 typedef struct n2n_edge_status_st {
@@ -89,6 +90,8 @@ extern int start_edge_v2s(n2n_edge_status_t* status);
 extern int stop_edge_v2s(void);
 extern int start_edge_v3(n2n_edge_status_t* status);
 extern int stop_edge_v3(void);
+extern int start_edge_v23(n2n_edge_status_t* status);
+extern int stop_edge_v23(void);
 extern void report_edge_status(void);
 
 #endif /* __ANDROID_NDK__ */

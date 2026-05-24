@@ -35,11 +35,13 @@ public class WebViewActivity extends BaseActivity {
     public static final int TYPE_WEB_VIEW_FEEDBACK = 1;
     public static final int TYPE_WEB_VIEW_SHARE = 2;
     public static final int TYPE_WEB_VIEW_CONTACT = 3;
+    public static final int TYPE_WEB_VIEW_V23 = 4;
 
-    public static final String ABOUT_URL = "https://github.com/switch-iot/hin2n/blob/dev/README.md";
-    public static final String SHARE_URL = "https://github.com/switch-iot/hin2n/wiki/Welcome-to-hin2n";
-    public static final String CONTACT_URL = "https://github.com/switch-iot/hin2n/wiki/Feedback-&-Contact-Us";
-    public static final String FEEDBACK_URL = "https://support.qq.com/products/38470";
+    public static final String ABOUT_URL = "https://github.com/lmq8267/hin2n-Redir#hin2n-";
+    public static final String SHARE_URL = "https://github.com/lmq8267/hin2n-Redir/releases";
+    public static final String CONTACT_URL = "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=BCFvLtpX6PoXMdUbbGnNKxwZzGrJA4jG&authKey=Og3GoKllU0wqwtjvOoU8BZOC1ZFZ7RszFjB4xRIkzzcAaRWMNv6iaPNKzeZvWenk&noverify=0&group_code=196588661";
+    public static final String FEEDBACK_URL = "https://github.com/lmq8267/hin2n-Redir/issues";
+    public static final String V23_URL = "https://github.com/lucktu/n2n6";
 
     private WebView mWebView;
     private AVLoadingIndicatorView mLoadingView;
@@ -132,20 +134,24 @@ public class WebViewActivity extends BaseActivity {
 
         switch (webViewType) {
             case TYPE_WEB_VIEW_ABOUT:
-                mCommonTitleTemplate.setTitleText("About");
+                mCommonTitleTemplate.setTitleText(getString(R.string.about));
                 mWebView.loadUrl(ABOUT_URL);
                 break;
             case TYPE_WEB_VIEW_FEEDBACK:
-                mCommonTitleTemplate.setTitleText("Feedback");
+                mCommonTitleTemplate.setTitleText(getString(R.string.feedback));
                 mWebView.loadUrl(FEEDBACK_URL);
                 break;
             case TYPE_WEB_VIEW_SHARE:
-                mCommonTitleTemplate.setTitleText("Share");
+                mCommonTitleTemplate.setTitleText(getString(R.string.share));
                 mWebView.loadUrl(SHARE_URL);
                 break;
             case TYPE_WEB_VIEW_CONTACT:
-                mCommonTitleTemplate.setTitleText("Contact");
+                mCommonTitleTemplate.setTitleText(getString(R.string.contact));
                 mWebView.loadUrl(CONTACT_URL);
+                break;
+            case TYPE_WEB_VIEW_V23:
+                mCommonTitleTemplate.setTitleText("v23");
+                mWebView.loadUrl(V23_URL);
                 break;
             default:
                 break;

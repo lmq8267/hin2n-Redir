@@ -6,6 +6,10 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+#设置仓库的读写权限
+permissions:
+  contents: write
+  actions: write
 env:
   TZ: Asia/Shanghai
 jobs:

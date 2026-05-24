@@ -85,13 +85,44 @@
 
             </RelativeLayout>
 
+            <RelativeLayout
+                android:id="@+id/rl_log_action_bar"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_below="@id/rl_current_setting"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="10dp">
+
+                <TextView
+                    android:id="@+id/tv_log_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="@string/running_log"
+                    android:textColor="@color/c_black"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_share_log"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_alignParentRight="true"
+                    android:gravity="center"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:text="@string/share_log"
+                    android:textColor="@color/colorPrimary"
+                    android:textSize="14sp" />
+            </RelativeLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/scroll_log_action"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_below="@id/rl_current_setting"
+                android:layout_below="@id/rl_log_action_bar"
                 android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="0dp"
                 android:layout_marginEnd="10dp"
                 android:layout_marginBottom="10dp"
                 android:background="@color/termail_gray"
@@ -99,15 +130,6 @@
                 android:focusable="true"
                 android:focusableInTouchMode="true">
 
-<!--                <TextView-->
-<!--                    android:id="@+id/tv_log_action"-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="match_parent"-->
-<!--                    android:layout_below="@id/rl_current_setting"-->
-<!--                    android:layout_margin="10dp"-->
-<!--                    android:text="/n2n"-->
-<!--                    android:textColor="@color/c_white"-->
-<!--                    android:textSize="11sp" />-->
             </androidx.recyclerview.widget.RecyclerView>
         </RelativeLayout>
 <!--    </androidx.core.widget.NestedScrollView>-->

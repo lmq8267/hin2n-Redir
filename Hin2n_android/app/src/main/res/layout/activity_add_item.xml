@@ -54,23 +54,29 @@
                         android:id="@+id/rb_v1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="v1   " />
+                        android:text="@string/version_v1" />
                     <RadioButton
                         android:id="@+id/rb_v2s"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="v2s   "/>
+                        android:text="@string/version_v2s"/>
                     <RadioButton
                         android:id="@+id/rb_v2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="v2    "/>
+                        android:text="@string/version_v2"/>
                     <RadioButton
                         android:id="@+id/rb_v3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="true"
-                        android:text="v3"/>
+                        android:text="@string/version_v3"/>
+                    <RadioButton
+                        android:id="@+id/rb_v23"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@android:color/holo_blue_dark"
+                        android:text="@string/version_v23"/>
                 </RadioGroup>
 
             </LinearLayout>
@@ -86,8 +92,7 @@
                     android:id="@+id/tie_super_node"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:maxLength="47"
-                    android:text=""/>
+                    android:maxLength="47" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -171,7 +176,7 @@
                     android:id="@+id/tie_net_mask"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="255.255.255.0"/>
+                    android:text="@string/default_netmask"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -258,7 +263,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_below="@id/til_super_node_2"
-                    android:hint="MTU">
+                    android:hint="@string/mtu">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/tie_mtu"
@@ -305,9 +310,48 @@
                     android:layout_height="wrap_content"
                     android:text="@string/automatically_detect_local_ip"/>
 
-                <com.google.android.material.textfield.TextInputLayout
+                <LinearLayout
                     android:layout_marginTop="5dp"
                     android:layout_below="@id/check_box_local_ip"
+                    android:id="@+id/ll_v23_address_family"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/v23_supernode_address_family"/>
+
+                    <RadioGroup
+                        android:id="@+id/rg_v23_address_family"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/rb_v23_addr_auto"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/v23_address_family_auto"/>
+
+                        <RadioButton
+                            android:id="@+id/rb_v23_addr_ipv4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/v23_address_family_ipv4"/>
+
+                        <RadioButton
+                            android:id="@+id/rb_v23_addr_ipv6"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/v23_address_family_ipv6"/>
+                    </RadioGroup>
+                </LinearLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_marginTop="5dp"
+                    android:layout_below="@id/ll_v23_address_family"
                     android:id="@+id/til_local_port"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -517,12 +561,6 @@
                         android:text="@string/save"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
-                    <!--<Button-->
-                        <!--android:layout_weight="0.5"-->
-                        <!--android:id="@+id/btn_delete"-->
-                        <!--android:text="delete"-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content"/>-->
                 </LinearLayout>
             </RelativeLayout>
 

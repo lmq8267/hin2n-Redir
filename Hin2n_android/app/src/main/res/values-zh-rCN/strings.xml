@@ -33,6 +33,7 @@
         <item>n2n_v2</item>
         <item>n2n_v2s</item>
         <item>n2n_v3</item>
+        <item>n2n_v23</item>
     </string-array>
 
     <string name="trace_level_error">错误</string>
@@ -55,6 +56,11 @@
     <string name="supernode_2">中心节点2</string> 
     <string name="hole_punch_interval">打洞间隔(秒)</string> 
     <string name="local_ip">本地IP地址</string> 
+    <string name="v23_ipv6_address">IPv6地址/前缀</string>
+    <string name="v23_supernode_address_family">中心节点 DNS 地址族</string>
+    <string name="v23_address_family_auto">自动</string>
+    <string name="v23_address_family_ipv4">IPv4</string>
+    <string name="v23_address_family_ipv6">IPv6</string>
     <string name="automatically_detect_local_ip">自动识别本地IP地址</string> 
     <string name="local_port">本地端口</string> 
     <string name="gateway_ip_address">网关IP</string> 
@@ -71,6 +77,35 @@
     <string name="choose_setting">选择设置</string> 
     <string name="start_service_at_boot">开机启动</string> 
     <string name="share">分享</string> 
+    <string name="running_log">运行日志</string>
+    <string name="share_log">分享日志</string>
+    <string name="share_log_title">分享 hin2n 日志</string>
+    <string name="share_log_empty">没有可分享的日志文件</string>
+    <string name="action_copy">复制</string>
+    <string name="action_delete">删除</string>
+    <string name="contact">联系</string>
+    <string name="toast_vpn_parameter_not_accepted">系统不接受当前 VPN 参数。</string>
+    <string name="toast_vpn_parameter_cannot_apply">系统无法应用当前 VPN 参数。</string>
+    <string name="toast_stop_in_progress">正在停止连接，请稍候。</string>
+    <string name="toast_no_setting_selected">未选择配置。</string>
+    <string name="toast_need_permissions">需要授予权限。</string>
+    <string name="toast_error">发生错误</string>
+    <string name="dialog_error_title">出错了</string>
+    <string name="dialog_error_content">操作失败，请稍后重试。</string>
+    <string name="version_v1">v1   </string>
+    <string name="version_v2s">v2s   </string>
+    <string name="version_v2">v2    </string>
+    <string name="version_v3">v3</string>
+    <string name="version_v23">v23</string>
+    <string name="default_netmask">255.255.255.0</string>
+    <string name="follow_official_weibo">关注官方微博</string>
+    <string name="unknown">未知</string>
+    <string name="null_placeholder">--null--</string>
+    <string name="notification_service_running">hin2n 服务正在运行</string>
+    <string name="item_get_ip_from_supernode_ip">0.0.0.0</string>
+    <string name="share_app_description">N2N 是一个支持 P2P 的 VPN 项目。</string>
+    <string name="share_content_hint">编辑分享内容</string>
+    <string name="mtu">MTU</string>
     <string name="contact_us">加入QQ群</string> 
     <string name="feedback">网上反馈</string> 
     <string name="check_update">检查更新</string> 

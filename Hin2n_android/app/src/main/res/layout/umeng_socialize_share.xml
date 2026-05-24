@@ -17,7 +17,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text=""
             android:textColor="#ffffff"
             android:textSize="18sp" />
 
@@ -47,7 +46,7 @@
             android:gravity="center_vertical"
             android:paddingLeft="15dp"
             android:paddingRight="15dp"
-            android:text="分享"
+            android:text="@string/share"
             android:textColor="#ffffff"
             android:textSize="15sp" />
     </RelativeLayout>
@@ -63,7 +62,7 @@
         android:background="#ffffff"
         android:bufferType="spannable"
         android:gravity="top"
-        android:hint="编辑分享内容"
+        android:hint="@string/share_content_hint"
         android:lineSpacingExtra="3dp"
         android:paddingBottom="10dp"
         android:textColor="#000000"

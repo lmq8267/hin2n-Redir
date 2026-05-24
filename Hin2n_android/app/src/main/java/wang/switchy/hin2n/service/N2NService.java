@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
+import java.net.InetAddress;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -74,6 +75,19 @@ public class N2NService extends VpnService {
                 .addAddress(ip, mask)
                 .addRoute(getRoute(mN2nSettingInfo.getIp(), mask), mask);
 
+        String localIP = mN2nSettingInfo.getLocalIP();
+        if (mN2nSettingInfo.getVersion() == 4 && localIP != null && !localIP.isEmpty()) {
+            String[] ipv6Prefix = localIP.split("/", -1);
+            if (ipv6Prefix.length == 2) {
+                try {
+                    InetAddress ipv6Address = InetAddress.getByName(ipv6Prefix[0]);
+                    builder.addAddress(ipv6Address, Integer.valueOf(ipv6Prefix[1]));
+                } catch (Exception e) {
+                    Log.e("N2NService", "Invalid v23 IPv6 address: " + localIP, e);
+                }
+            }
+        }
+
         if (!mN2nSettingInfo.getGatewayIp().isEmpty()) {
             /* Route all the internet traffic via n2n. Most specific routes "win" over the system default gateway.
              * See https://github.com/zerotier/ZeroTierOne/issues/178#issuecomment-204599227 */
@@ -90,10 +104,10 @@ public class N2NService extends VpnService {
         try {
             mParcelFileDescriptor = builder.setSession(session).establish();
         } catch (IllegalArgumentException e) {
-            Toast.makeText(INSTANCE, "Parameter is not accepted by the operating system.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(INSTANCE, R.string.toast_vpn_parameter_not_accepted, Toast.LENGTH_SHORT).show();
             return -1;
         } catch (IllegalStateException e) {
-            Toast.makeText(INSTANCE, "Parameter cannot be applied by the operating system.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(INSTANCE, R.string.toast_vpn_parameter_cannot_apply, Toast.LENGTH_SHORT).show();
             return -1;
         }
 
@@ -152,12 +166,12 @@ public class N2NService extends VpnService {
             Intent i = new Intent(this, MainActivity.class);
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, i, 0);
             NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this,CHANNEL_ONE_ID)
-                    .setTicker("Nature")
+                    .setTicker(getString(R.string.app_name))
                     .setSmallIcon(R.mipmap.ic_launcher)
                     .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
                     .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
-                    .setContentTitle("hin2n")
-                    .setContentText("hin2n service is running")
+                    .setContentTitle(getString(R.string.app_name))
+                    .setContentText(getString(R.string.notification_service_running))
                     .setContentIntent(pendingIntent);
             Notification notification = notificationBuilder.build();
             notification.flags |= Notification.FLAG_NO_CLEAR;
@@ -173,7 +187,7 @@ public class N2NService extends VpnService {
 
     public boolean stop(final Runnable onStopCallback) {
         if (isStopInProgress()) {
-            Toast.makeText(getApplicationContext(), "a stop command is already in progress", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), R.string.toast_stop_in_progress, Toast.LENGTH_SHORT).show();
             return (false);
         }
 
