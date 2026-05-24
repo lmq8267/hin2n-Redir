@@ -718,7 +718,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 || TextUtils.isEmpty(mSuperNodeTIL.getEditText().getText())) {
             Boolean bReq = false;
             if (TextUtils.isEmpty(mSettingName.getEditText().getText())) {
-                mSettingName.setError(mSettingName.getHint() + " is required");
+                setRequiredError(mSettingName);
                 if (!bReq) {
                     mSettingName.getEditText().requestFocus();
                     bReq = true;
@@ -728,7 +728,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
 
             if (TextUtils.isEmpty(mSuperNodeTIL.getEditText().getText())) {
-                mSuperNodeTIL.setError(mSuperNodeTIL.getHint() + " is required");
+                setRequiredError(mSuperNodeTIL);
                 if (!bReq) {
                     mSuperNodeTIL.getEditText().requestFocus();
                     bReq = true;
@@ -738,7 +738,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
 
             if (TextUtils.isEmpty(mCommunityTIL.getEditText().getText())) {
-                mCommunityTIL.setError(mCommunityTIL.getHint() + " is required");
+                setRequiredError(mCommunityTIL);
                 if (!bReq) {
                     mCommunityTIL.getEditText().requestFocus();
                     bReq = true;
@@ -753,21 +753,21 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
          * 基础配置参数检查
          */
         if (!EdgeCmd.checkSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
-            mSuperNodeTIL.setError(mSuperNodeTIL.getHint() + " format is incorrect");
+            setFormatError(mSuperNodeTIL);
             mSuperNodeTIL.getEditText().requestFocus();
             return false;
         } else {
             mSuperNodeTIL.setErrorEnabled(false);
         }
         if (!EdgeCmd.checkCommunity(mCommunityTIL.getEditText().getText().toString())) {
-            mCommunityTIL.setError(mCommunityTIL.getHint() + " format is incorrect");
+            setFormatError(mCommunityTIL);
             mCommunityTIL.getEditText().requestFocus();
             return false;
         } else {
             mCommunityTIL.setErrorEnabled(false);
         }
         if (!EdgeCmd.checkEncKey(mEncryptTIL.getEditText().getText().toString())) {
-            mEncryptTIL.setError(mEncryptTIL.getHint() + " format is incorrect");
+            setFormatError(mEncryptTIL);
             mEncryptTIL.getEditText().requestFocus();
             return false;
         } else {
@@ -776,14 +776,14 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
 
         if (!mGetIpFromSupernodeCheckBox.isChecked()) {
             if (TextUtils.isEmpty(mIpAddressTIL.getEditText().getText())) {
-                mIpAddressTIL.setError(mIpAddressTIL.getHint() + " is required");
+                setRequiredError(mIpAddressTIL);
                 mIpAddressTIL.getEditText().requestFocus();
             } else {
                 mIpAddressTIL.setErrorEnabled(false);
             }
 
             if (!EdgeCmd.checkIPV4(mIpAddressTIL.getEditText().getText().toString())) {
-                mIpAddressTIL.setError(mIpAddressTIL.getHint() + " format is incorrect");
+                setFormatError(mIpAddressTIL);
                 mIpAddressTIL.getEditText().requestFocus();
                 return false;
             } else {
@@ -794,7 +794,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         // netmask => v1, v2, v2s
         if (!EdgeCmd.checkIPV4Mask(TextUtils.isEmpty(mNetMaskTIL.getEditText().getText().toString()) ?
                         "255.255.255.0" : mNetMaskTIL.getEditText().getText().toString())) {
-            mNetMaskTIL.setError(mNetMaskTIL.getHint() + " format is incorrect");
+            setFormatError(mNetMaskTIL);
             mNetMaskTIL.getEditText().requestFocus();
             return false;
         } else {
@@ -802,7 +802,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         }
         if((!mGatewayIp.getEditText().getText().toString().isEmpty()) &&
             (!EdgeCmd.checkIPV4(mGatewayIp.getEditText().getText().toString()))) {
-          mGatewayIp.setError(mGatewayIp.getHint() + " format is incorrect");
+          setFormatError(mGatewayIp);
           mGatewayIp.getEditText().requestFocus();
           return false;
         } else {
@@ -811,7 +811,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
 
         if((!mDnsServer.getEditText().getText().toString().isEmpty()) &&
                 (!EdgeCmd.checkIPV4(mDnsServer.getEditText().getText().toString()))) {
-            mDnsServer.setError(mDnsServer.getHint() + " format is incorrect");
+            setFormatError(mDnsServer);
             mDnsServer.getEditText().requestFocus();
             return false;
         } else {
@@ -824,7 +824,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         int ver = getN2nVersion();
         // backup supernode => v2, v2s, v23
         if ((ver == 1 || ver == 2 || ver == 4) && !TextUtils.isEmpty(mSuperNodeBackup.getEditText().getText().toString()) && !EdgeCmd.checkSupernode(mSuperNodeBackup.getEditText().getText().toString())) {
-            mSuperNodeBackup.setError(mSuperNodeBackup.getHint() + " format is incorrect");
+            setFormatError(mSuperNodeBackup);
             mSuperNodeBackup.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
             mMoreSettingView.setVisibility(View.VISIBLE);
@@ -833,8 +833,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mSuperNodeBackup.setErrorEnabled(false);
         }
         // mtu => v1, v2, v2s
-        if (!TextUtils.isEmpty(mMtu.getEditText().getText().toString()) && !EdgeCmd.checkMtu(Integer.valueOf(mMtu.getEditText().getText().toString()))) {
-            mMtu.setError(mMtu.getHint() + " format is incorrect");
+        if (!TextUtils.isEmpty(mMtu.getEditText().getText().toString()) && !isMtuValid(mMtu.getEditText().getText().toString())) {
+            setFormatError(mMtu);
             mMtu.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
             mMoreSettingView.setVisibility(View.VISIBLE);
@@ -843,8 +843,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mMtu.setErrorEnabled(false);
         }
         // holePunchInterval => v2s
-        if (ver == 2 && !TextUtils.isEmpty(mHolePunchInterval.getEditText().getText().toString()) && !EdgeCmd.checkInt(Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), 10, 120)) {
-            mHolePunchInterval.setError(mHolePunchInterval.getHint() + " format is incorrect");
+        if (ver == 2 && !TextUtils.isEmpty(mHolePunchInterval.getEditText().getText().toString()) && !isIntInRange(mHolePunchInterval.getEditText().getText().toString(), 10, 120)) {
+            setFormatError(mHolePunchInterval);
             mHolePunchInterval.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
             mMoreSettingView.setVisibility(View.VISIBLE);
@@ -855,7 +855,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         // localIP => v2s
         if (ver == 2 && !mLocalIpCheckBox.isChecked()) {
             if (!TextUtils.isEmpty(mLocalIP.getEditText().getText().toString()) && !EdgeCmd.checkIPV4(mLocalIP.getEditText().getText().toString())) {
-                mLocalIP.setError(mLocalIP.getHint() + " format is incorrect");
+                setFormatError(mLocalIP);
                 mLocalIP.getEditText().requestFocus();
                 mMoreSettingCheckBox.setChecked(true);
                 mMoreSettingView.setVisibility(View.VISIBLE);
@@ -867,7 +867,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         // IPv6 address/prefix => v23 -A
         if (ver == 4 && !TextUtils.isEmpty(mLocalIP.getEditText().getText().toString())) {
             if (!EdgeCmd.checkIPV6Prefix(mLocalIP.getEditText().getText().toString())) {
-                mLocalIP.setError(mLocalIP.getHint() + " format is incorrect");
+                setFormatError(mLocalIP);
                 mLocalIP.getEditText().requestFocus();
                 mMoreSettingCheckBox.setChecked(true);
                 mMoreSettingView.setVisibility(View.VISIBLE);
@@ -877,8 +877,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             }
         }
         // localPort => v1, v2, v2s
-        if (!TextUtils.isEmpty(mLocalPort.getEditText().getText().toString()) && !EdgeCmd.checkInt(Integer.valueOf(mLocalPort.getEditText().getText().toString()), 0, 65535)) {
-            mLocalPort.setError(mLocalPort.getHint() + " format is incorrect");
+        if (!TextUtils.isEmpty(mLocalPort.getEditText().getText().toString()) && !isIntInRange(mLocalPort.getEditText().getText().toString(), 0, 65535)) {
+            setFormatError(mLocalPort);
             mLocalPort.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
             mMoreSettingView.setVisibility(View.VISIBLE);
@@ -888,7 +888,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         }
         // macAddr => v1, v2, v2s
         if (!TextUtils.isEmpty(mMacAddr.getEditText().getText().toString()) && !EdgeCmd.checkMacAddr(mMacAddr.getEditText().getText().toString())) {
-            mMacAddr.setError(mMacAddr.getHint() + " format is incorrect");
+            setFormatError(mMacAddr);
             mMacAddr.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
             mMoreSettingView.setVisibility(View.VISIBLE);
@@ -898,6 +898,30 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         }
 
         return true;
+    }
+
+    private void setRequiredError(TextInputLayout textInputLayout) {
+        textInputLayout.setError(getString(R.string.error_required, textInputLayout.getHint()));
+    }
+
+    private void setFormatError(TextInputLayout textInputLayout) {
+        textInputLayout.setError(getString(R.string.error_format_incorrect, textInputLayout.getHint()));
+    }
+
+    private boolean isMtuValid(String value) {
+        try {
+            return EdgeCmd.checkMtu(Integer.valueOf(value));
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean isIntInRange(String value, int min, int max) {
+        try {
+            return EdgeCmd.checkInt(Integer.valueOf(value), min, max);
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     @Override

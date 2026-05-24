@@ -101,7 +101,9 @@
     <string name="follow_official_weibo">Follow official Weibo</string>
     <string name="unknown">Unknown</string>
     <string name="null_placeholder">--null--</string>
-    <string name="notification_service_running">hin2n service is running</string>
+    <string name="notification_service_running">%1$s service is running</string>
+    <string name="error_required">%1$s is required</string>
+    <string name="error_format_incorrect">%1$s format is incorrect</string>
     <string name="item_get_ip_from_supernode_ip">0.0.0.0</string>
     <string name="share_app_description">N2N is a VPN project that supports p2p.</string>
     <string name="share_content_hint">Edit share content</string>

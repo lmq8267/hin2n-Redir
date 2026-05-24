@@ -101,7 +101,9 @@
     <string name="follow_official_weibo">关注官方微博</string>
     <string name="unknown">未知</string>
     <string name="null_placeholder">--null--</string>
-    <string name="notification_service_running">hin2n 服务正在运行</string>
+    <string name="notification_service_running">%1$s 配置正在运行</string>
+    <string name="error_required">%1$s不能为空</string>
+    <string name="error_format_incorrect">%1$s格式不正确</string>
     <string name="item_get_ip_from_supernode_ip">0.0.0.0</string>
     <string name="share_app_description">N2N 是一个支持 P2P 的 VPN 项目。</string>
     <string name="share_content_hint">编辑分享内容</string>

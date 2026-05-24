@@ -575,9 +575,6 @@ void ResetEdgeStatus(JNIEnv *env, uint8_t cleanup) {
         if (status.tid != -1) {
             pthread_join(status.tid, NULL);
         }
-        if (status_mutex_initialized) {
-            pthread_mutex_lock(&status.mutex);
-        }
         if (env) {
             if (status.jcls_rs) {
                 (*env)->DeleteGlobalRef(env, status.jcls_rs);
@@ -598,10 +595,11 @@ void ResetEdgeStatus(JNIEnv *env, uint8_t cleanup) {
         if (status.cmd.logpath) {
             free(status.cmd.logpath);
         }
-        InitEdgeStatus();
         if (status_mutex_initialized) {
-            pthread_mutex_unlock(&status.mutex);
+            pthread_mutex_destroy(&status.mutex);
+            status_mutex_initialized = 0;
         }
+        InitEdgeStatus();
     }
     pthread_mutex_unlock(&mut);
 }

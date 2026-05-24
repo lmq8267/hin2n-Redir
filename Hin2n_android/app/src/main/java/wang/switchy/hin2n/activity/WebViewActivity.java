@@ -1,8 +1,6 @@
 package wang.switchy.hin2n.activity;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
@@ -38,10 +36,12 @@ public class WebViewActivity extends BaseActivity {
     public static final int TYPE_WEB_VIEW_SHARE = 2;
     public static final int TYPE_WEB_VIEW_CONTACT = 3;
     public static final int TYPE_WEB_VIEW_V23 = 4;
+    public static final int TYPE_WEB_VIEW_UPDATE = 5;
 
     public static final String ABOUT_URL = "https://github.com/lmq8267/hin2n-Redir#hin2n-";
     public static final String SHARE_URL = "https://github.com/lmq8267/hin2n-Redir/releases";
-    public static final String CONTACT_URL = "http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=BCFvLtpX6PoXMdUbbGnNKxwZzGrJA4jG&authKey=Og3GoKllU0wqwtjvOoU8BZOC1ZFZ7RszFjB4xRIkzzcAaRWMNv6iaPNKzeZvWenk&noverify=0&group_code=196588661";
+    public static final String UPDATE_URL = "https://github.com/lmq8267/hin2n-Redir/releases";
+    public static final String CONTACT_URL = "https://github.com/lmq8267/hin2n-Redir#%E4%BA%A4%E6%B5%81%E7%BE%A4";
     public static final String FEEDBACK_URL = "https://github.com/lmq8267/hin2n-Redir/issues";
     public static final String V23_URL = "https://github.com/lucktu/n2n6";
 
@@ -94,15 +94,6 @@ public class WebViewActivity extends BaseActivity {
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Log.w("WebViewActivity", "Unable to open url: " + url, e);
-                    }
-                    return true;
-                }
                 view.loadUrl(url);
                 return true;
             }
@@ -163,6 +154,10 @@ public class WebViewActivity extends BaseActivity {
             case TYPE_WEB_VIEW_V23:
                 mCommonTitleTemplate.setTitleText("v23");
                 mWebView.loadUrl(V23_URL);
+                break;
+            case TYPE_WEB_VIEW_UPDATE:
+                mCommonTitleTemplate.setTitleText(getString(R.string.check_update));
+                mWebView.loadUrl(UPDATE_URL);
                 break;
             default:
                 break;

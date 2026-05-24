@@ -189,6 +189,8 @@ int start_edge_v23(n2n_edge_status_t *status) {
     pthread_mutex_unlock(&g_status->mutex);
     g_status->report_edge_status();
 
+    optind = 1;
+    optarg = NULL;
     int ret = edge_v23_main(argc, argv);
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = ret ? EDGE_STAT_FAILED : EDGE_STAT_DISCONNECT;
@@ -203,7 +205,7 @@ int start_edge_v23(n2n_edge_status_t *status) {
 }
 
 int stop_edge_v23(void) {
-    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    int fd = open_socket(0, 0 /* bind LOOPBACK*/);
     struct sockaddr_in peer_addr;
 
     if (fd < 0) {
@@ -211,7 +213,7 @@ int stop_edge_v23(void) {
     }
 
     memset(&peer_addr, 0, sizeof(peer_addr));
-    peer_addr.sin_family = AF_INET;
+    peer_addr.sin_family = PF_INET;
     peer_addr.sin_port = htons(V23_MGMT_PORT);
     peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     sendto(fd, "stop", 4, 0, (struct sockaddr *)&peer_addr, sizeof(peer_addr));

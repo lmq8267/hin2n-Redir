@@ -302,7 +302,11 @@ public class EdgeCmd {
             }
         }
 
-        return true;
+        try {
+            return (Integer.parseInt(mac.substring(0, 2), 16) & 0x01) == 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public static boolean checkMtu(int mtu) {
@@ -321,7 +325,9 @@ public class EdgeCmd {
     public static String getRandomMac() {
         String mac = "", hex = "0123456789abcdef";
         Random rand = new Random();
-        for (int i = 0; i < 17; ++i) {
+        int firstByte = (rand.nextInt(256) & 0xfe) | 0x02;
+        mac = String.format("%02x", firstByte);
+        for (int i = 2; i < 17; ++i) {
             if ((i + 1) % 3 == 0) {
                 mac += ':';
                 continue;

@@ -26,7 +26,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.orhanobut.logger.Logger;
-import com.tencent.bugly.beta.Beta;
 import com.yanzhenjie.permission.Action;
 import com.yanzhenjie.permission.AndPermission;
 import com.yanzhenjie.permission.runtime.Permission;
@@ -303,7 +302,9 @@ public class MainActivity extends BaseActivity {
         checkUpdateItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Beta.checkUpgrade();
+                Intent intent = new Intent(MainActivity.this, WebViewActivity.class);
+                intent.putExtra(WebViewActivity.WEB_VIEW_TYPE, WebViewActivity.TYPE_WEB_VIEW_UPDATE);
+                startActivity(intent);
             }
         });
 
