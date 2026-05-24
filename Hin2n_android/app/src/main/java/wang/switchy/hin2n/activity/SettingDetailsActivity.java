@@ -6,6 +6,7 @@ import android.net.VpnService;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.PasswordTransformationMethod;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -154,12 +155,16 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mVersionV2s = (RadioButton) findViewById(R.id.rb_v2s);
         mVersionV3 = (RadioButton) findViewById(R.id.rb_v3);
         mVersionV23 = (RadioButton) findViewById(R.id.rb_v23);
-        mVersionV23.setOnClickListener(new View.OnClickListener() {
+        mVersionV23.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(SettingDetailsActivity.this, WebViewActivity.class);
-                intent.putExtra(WebViewActivity.WEB_VIEW_TYPE, WebViewActivity.TYPE_WEB_VIEW_V23);
-                startActivity(intent);
+            public boolean onTouch(View view, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_UP && event.getX() >= mVersionV23.getCompoundPaddingLeft()) {
+                    Intent intent = new Intent(SettingDetailsActivity.this, WebViewActivity.class);
+                    intent.putExtra(WebViewActivity.WEB_VIEW_TYPE, WebViewActivity.TYPE_WEB_VIEW_V23);
+                    startActivity(intent);
+                    return true;
+                }
+                return false;
             }
         });
 

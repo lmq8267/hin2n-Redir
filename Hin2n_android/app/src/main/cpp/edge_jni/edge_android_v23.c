@@ -15,7 +15,7 @@
 
 #include "n2n.h"
 
-#define V23_MGMT_PORT 5644
+#define V23_MGMT_PORT 5664
 
 extern int edge_v23_main(int argc, char *argv[]);
 extern int __real_socket(int domain, int type, int protocol);
