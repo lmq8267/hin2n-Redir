@@ -203,10 +203,12 @@ public class EdgeCmd {
         if (supernode == null || supernode.isEmpty() || supernode.length() > 47) {
             return false;
         }
-        // 如果以 "txt:" "http:" 开头，直接认为合法
-    	if (supernode.startsWith("txt:") || supernode.startsWith("http:")) {
-        	return true;
-    	}
+        // 忽略协议前缀大小写，支持 txt:、txt://、http:、http://、https:、https:// 写法。
+        if (supernode.regionMatches(true, 0, "txt:", 0, 4)
+                || supernode.regionMatches(true, 0, "http:", 0, 5)
+                || supernode.regionMatches(true, 0, "https:", 0, 6)) {
+            return true;
+        }
         String[] split = supernode.split(":");
         if (split == null || split.length != 2 || split[0].isEmpty()) {
             return false;

@@ -9,3 +9,6 @@
 	path = bundles/n2n_ntop_v3
 	url = https://github.com/ntop/n2n.git
 	branch = 3.0-stable
+[submodule "n2n_v2_ipv6"]
+	path = bundles/n2n_v2_ipv6
+	url = https://github.com/lucktu/n2n6

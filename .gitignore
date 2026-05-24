@@ -26,6 +26,8 @@
 *.dll
 *.so
 *.so.*
+!Hin2n_android/app/src/main/jniLibs/*/libcrypto.so
+!Hin2n_android/app/src/main/jniLibs/*/libssl.so
 *.dylib
 
 # Executables

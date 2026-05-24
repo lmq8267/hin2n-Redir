@@ -13,9 +13,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@main
         with:
           submodules: recursive
+      - name: 清理失败和取消的运行记录
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 0
+          delete_workflow_pattern: ${{ github.workflow }}        # 只匹配当前同名 workflow
+          delete_run_by_conclusion_pattern: "cancelled,failure" # 删除取消+失败，保留成功的
       - name: 下载工具链
         run: |
           #下载jdk sdk ndk工具链
@@ -46,7 +55,7 @@ jobs:
          zip -r hin2n-android.zip /opt/hin2n
       - name : 上传
         uses: actions/upload-artifact@master
-        if: always()
         with:
          name: n2n
          path: /opt/hin2n
+

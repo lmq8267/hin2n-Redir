@@ -86,6 +86,7 @@
                     android:id="@+id/tie_super_node"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:maxLength="47"
                     android:text=""/>
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -246,7 +247,8 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/tie_super_node_2"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:maxLength="47" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 

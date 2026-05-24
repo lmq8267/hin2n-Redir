@@ -25,6 +25,7 @@
 #include <curl/curl.h>
 #include <regex.h> 
 #include <ares.h>
+#include <strings.h>
 #include "n2n.h"
 #include "n2n_transforms.h"
 #include <assert.h>
@@ -2133,9 +2134,9 @@ size_t write_callback(void *ptr, size_t size, size_t nmemb, char *data) {
 
 // 去除字符串开头的 "http://" 或 "https://" 和随后的 "/"
 void strip_http_prefix(char *url) {
-    if (strncmp(url, "http://", 7) == 0) {
+    if (strncasecmp(url, "http://", 7) == 0) {
         memmove(url, url + 7, strlen(url + 7) + 1);
-    } else if (strncmp(url, "https://", 8) == 0) {
+    } else if (strncasecmp(url, "https://", 8) == 0) {
         memmove(url, url + 8, strlen(url + 8) + 1);
     }
     
@@ -2163,9 +2164,9 @@ static void supernode2addr(n2n_sock_t * sn, const n2n_sn_name_t addrIn)
 	const char *supernode_host;
 
     memcpy( addr, addrIn, N2N_EDGE_SN_HOST_SIZE );
-    if (strncmp(addr, "txt:", 4) == 0) {
+    if (strncasecmp(addr, "txt:", 4) == 0) {
         // 处理txt查询
-        const char *domain = addr + 4; 
+        const char *domain = addr + (strncasecmp(addr, "txt://", 6) == 0 ? 6 : 4);
         ares_channel channel;
         struct ares_options options;
         int optmask = 0;
@@ -2225,17 +2226,17 @@ static void supernode2addr(n2n_sock_t * sn, const n2n_sn_name_t addrIn)
         }
     }
     // 检查是否以 http 或 https 开头
-    if (strncmp(addr, "http:", 5) == 0 || strncmp(addr, "https:", 6) == 0) {
+    if (strncasecmp(addr, "http:", 5) == 0 || strncasecmp(addr, "https:", 6) == 0) {
         char result[8192] = {0};
         CURL *curl;
         CURLcode res;
         char redirect_url[512] = {0};
 	// 如果 addr 以 http: 或 https: 开头但没有 //
-	if (strncmp(addr, "http:", 5) == 0 && strncmp(addr, "http://", 7) != 0) {
+	if (strncasecmp(addr, "http:", 5) == 0 && strncasecmp(addr, "http://", 7) != 0) {
     		char fixed[512] = {0};
     		snprintf(fixed, sizeof(fixed), "http://%s", addr + 5); // 添加 //
     		safe_strncpy(addr, fixed, sizeof(addr));
-	} else if (strncmp(addr, "https:", 6) == 0 && strncmp(addr, "https://", 8) != 0) {
+	} else if (strncasecmp(addr, "https:", 6) == 0 && strncasecmp(addr, "https://", 8) != 0) {
     		char fixed[512] = {0};
     		snprintf(fixed, sizeof(fixed), "https://%s", addr + 6); // 添加 //
     		safe_strncpy(addr, fixed, sizeof(addr));
@@ -2255,6 +2256,8 @@ static void supernode2addr(n2n_sock_t * sn, const n2n_sn_name_t addrIn)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback); // 设置写入回调函数
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, result); // 设置写入结果的缓冲区
     curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); // 强制使用 IPv4
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // 等同 curl -k，不校验证书链
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // 等同 curl -k，不校验主机名
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L); // 设置超时时间为 5 秒
 
     // 执行 IPv4 请求
@@ -2277,6 +2280,8 @@ static void supernode2addr(n2n_sock_t * sn, const n2n_sn_name_t addrIn)
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, result);
         curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6); // 改为 IPv6
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // 等同 curl -k，不校验证书链
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // 等同 curl -k，不校验主机名
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L); // 设置超时时间为 5 秒
 
         // 执行 IPv6 请求

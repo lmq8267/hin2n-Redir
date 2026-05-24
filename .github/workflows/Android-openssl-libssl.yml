@@ -1,0 +1,156 @@
+name: 构建 OpenSSL libssl
+
+on:
+  workflow_dispatch:
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build-openssl-libssl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@main
+
+      - name: 清理失败和取消的运行记录
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 0
+          delete_workflow_pattern: ${{ github.workflow }}        # 只匹配当前同名 workflow
+          delete_run_by_conclusion_pattern: "cancelled,failure" # 删除取消+失败，保留成功的
+
+      - name: 下载工具链
+        run: |
+          wget -c -q https://github.com/lmq8267/n2n-2.8.x/releases/download/toolchain/hin2n_byhj.tar.gz -P /opt/gcc/
+          tar -xf /opt/gcc/hin2n_byhj.tar.gz -C /opt/gcc/
+
+      - name: 构建 OpenSSL 1.1.1g libssl.so
+        shell: bash
+        run: |
+          set -Eeuxo pipefail
+          trap 'code=$?; echo "::error::命令失败，行号=${LINENO}，退出码=${code}"; exit ${code}' ERR
+
+          echo "::group::环境信息"
+          date
+          uname -a
+          id
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "RUNNER_TEMP=${RUNNER_TEMP:-}"
+          echo "::endgroup::"
+
+          echo "::group::设置时区"
+          sudo timedatectl set-timezone "Asia/Shanghai" || echo "::warning::timedatectl 设置时区失败，继续构建"
+          date
+          echo "::endgroup::"
+
+          echo "::group::设置 Android NDK 环境"
+          export ANDROID_HOME=/opt/gcc/Android/sdk
+          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+          export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
+          ls -la "$ANDROID_HOME"
+          ls -la "$ANDROID_NDK_HOME"
+          echo "::endgroup::"
+
+          echo "::group::准备 OpenSSL 源码"
+          OPENSSL_VERSION="1.1.1g"
+          OUT_DIR="/opt/openssl-libssl-${OPENSSL_VERSION}"
+          WORK_DIR="${RUNNER_TEMP:-/tmp}/hin2n-openssl-${OPENSSL_VERSION}"
+          TARBALL="${WORK_DIR}/openssl-${OPENSSL_VERSION}.tar.gz"
+
+          mkdir -p "$WORK_DIR" "$OUT_DIR/jniLibs"
+          wget "https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1g/openssl-${OPENSSL_VERSION}.tar.gz" -O "$TARBALL"
+          sha256sum "$TARBALL"
+          tar -xf "$TARBALL" -C "$WORK_DIR"
+          SRC_DIR="$(find "$WORK_DIR" -maxdepth 2 -type f -name Configure -printf '%h\n' | head -n 1)"
+          if [ -z "$SRC_DIR" ]; then
+            echo "::error::未找到 OpenSSL Configure 文件"
+            exit 1
+          fi
+          echo "OpenSSL 源码目录：$SRC_DIR"
+          echo "::endgroup::"
+
+          echo "::group::设置 OpenSSL Android 工具链 PATH"
+          TOOLCHAIN_HOST="linux-x86_64"
+          export PATH="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/$TOOLCHAIN_HOST/bin:$PATH"
+          for toolchain in arm-linux-androideabi-4.9 aarch64-linux-android-4.9 x86-4.9 x86_64-4.9; do
+            toolchain_bin="$ANDROID_NDK_ROOT/toolchains/$toolchain/prebuilt/$TOOLCHAIN_HOST/bin"
+            if [ -d "$toolchain_bin" ]; then
+              export PATH="$toolchain_bin:$PATH"
+            fi
+          done
+          which perl
+          which make
+          which clang || true
+          which arm-linux-androideabi-gcc || true
+          which aarch64-linux-android-gcc || true
+          which i686-linux-android-gcc || true
+          which x86_64-linux-android-gcc || true
+          echo "::endgroup::"
+
+          build_one() {
+            abi="$1"
+            target="$2"
+            api="$3"
+            build_dir="$WORK_DIR/build-$abi"
+            abi_out="$OUT_DIR/$abi"
+
+            rm -rf "$build_dir"
+            cp -a "$SRC_DIR" "$build_dir"
+            mkdir -p "$abi_out"
+
+            cd "$build_dir"
+            echo "::group::Configure $abi"
+            ./Configure "$target" -D__ANDROID_API__="$api" shared no-tests \
+              --prefix="$WORK_DIR/install-$abi" \
+              --openssldir="$WORK_DIR/install-$abi/ssl"
+            echo "::endgroup::"
+            echo "::group::make $abi"
+            make -j"$(nproc)" SHLIB_VERSION_NUMBER= SHLIB_EXT=.so
+            make install_sw SHLIB_VERSION_NUMBER= SHLIB_EXT=.so
+            echo "::endgroup::"
+            echo "::group::复制 $abi OpenSSL 产物"
+            ls -la libssl.so
+            ls -la libcrypto.so
+            cp -f libssl.so "$abi_out/libssl.so"
+            cp -f libcrypto.so "$abi_out/libcrypto.so"
+            cp -a "$WORK_DIR/install-$abi/include" "$abi_out/include"
+            find "$abi_out" -maxdepth 3 -type f -print
+            echo "::endgroup::"
+            cd "$GITHUB_WORKSPACE"
+          }
+
+          echo "::group::构建四个 ABI"
+          # 32 位 ABI 对应 app 的 minSdk 17；Android 64 位 ABI 从 API 21 开始才有 sysroot。
+          build_one "armeabi-v7a" "android-arm" "17"
+          build_one "x86" "android-x86" "17"
+          build_one "arm64-v8a" "android-arm64" "21"
+          build_one "x86_64" "android-x86_64" "21"
+          echo "::endgroup::"
+
+          echo "::group::生成 README"
+          {
+            printf '%s\n' 'OpenSSL 1.1.1g full Android build outputs for hin2n.'
+            printf '\n'
+            printf '%s\n' '使用方式：'
+            printf '%s\n' '1. 解压 artifact。'
+            printf '%s\n' '2. 每个 ABI 目录包含 libssl.so、libcrypto.so 和 include/openssl 头文件。'
+            printf '%s\n' '3. 如果只想补齐 curl HTTPS，可只复制对应 ABI 的 libssl.so。'
+            printf '%s\n' '4. 如果要保证 libssl/libcrypto/头文件完全同源，可整体替换对应 ABI 的 OpenSSL 文件。'
+          } > "$OUT_DIR/README.txt"
+          find "$OUT_DIR" -maxdepth 4 -type f -print
+          echo "::endgroup::"
+
+      - name: 上传 libssl
+        uses: actions/upload-artifact@master
+        with:
+          name: openssl-libssl-1.1.1g-android
+          path: /opt/openssl-libssl-1.1.1g
+
