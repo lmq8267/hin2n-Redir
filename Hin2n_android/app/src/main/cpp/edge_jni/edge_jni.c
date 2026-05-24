@@ -10,6 +10,7 @@
 #include "edge_jni.h"
 
 static n2n_edge_status_t status;
+static uint8_t status_mutex_initialized = 0;
 
 static int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd);
 
@@ -94,7 +95,10 @@ JNIEXPORT jboolean JNICALL Java_wang_switchy_hin2n_service_N2NService_startEdge(
             return JNI_FALSE;
     }
     status.report_edge_status = report_edge_status;
-    pthread_mutex_init(&status.mutex, NULL);
+    if (!status_mutex_initialized) {
+        pthread_mutex_init(&status.mutex, NULL);
+        status_mutex_initialized = 1;
+    }
     int ret = pthread_create(&status.tid, NULL, EdgeRoutine, NULL);
     if (ret != 0) {
         ResetEdgeStatus(env, 1 /* cleanup*/);
@@ -571,7 +575,9 @@ void ResetEdgeStatus(JNIEnv *env, uint8_t cleanup) {
         if (status.tid != -1) {
             pthread_join(status.tid, NULL);
         }
-        pthread_mutex_lock(&status.mutex);
+        if (status_mutex_initialized) {
+            pthread_mutex_lock(&status.mutex);
+        }
         if (env) {
             if (status.jcls_rs) {
                 (*env)->DeleteGlobalRef(env, status.jcls_rs);
@@ -593,8 +599,9 @@ void ResetEdgeStatus(JNIEnv *env, uint8_t cleanup) {
             free(status.cmd.logpath);
         }
         InitEdgeStatus();
-        pthread_mutex_unlock(&status.mutex);
-        pthread_mutex_destroy(&status.mutex);
+        if (status_mutex_initialized) {
+            pthread_mutex_unlock(&status.mutex);
+        }
     }
     pthread_mutex_unlock(&mut);
 }

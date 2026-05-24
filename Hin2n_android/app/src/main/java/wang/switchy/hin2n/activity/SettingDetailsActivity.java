@@ -107,6 +107,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private TextInputLayout mDnsServer;
     private LinearLayout mEncryptionBox;
     private Spinner mEncryptionMode;
+    private RelativeLayout mHeaderEncView;
     private CheckBox mHeaderEncCheckBox;
 
     @Override
@@ -241,6 +242,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mDnsServer = (TextInputLayout) findViewById(R.id.til_dns_server_ip);
         mEncryptionBox = (LinearLayout) findViewById(R.id.ll_n2n_encryption);
         mEncryptionMode = (Spinner) findViewById(R.id.til_encryption_mode);
+        mHeaderEncView = (RelativeLayout) findViewById(R.id.rl_header_enc);
         mHeaderEncCheckBox = (CheckBox) findViewById(R.id.header_enc_check_box);
 
         ArrayAdapter<CharSequence> encAdapter = ArrayAdapter.createFromResource(this, R.array.encryption_modes,
@@ -417,7 +419,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
-                mHeaderEncCheckBox.setVisibility(View.GONE);
+                mHeaderEncView.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v1);
                 }
@@ -437,7 +439,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncCheckBox.setVisibility(View.VISIBLE);
+                mHeaderEncView.setVisibility(View.VISIBLE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2);
                 }
@@ -458,7 +460,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.GONE);
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
-                mHeaderEncCheckBox.setVisibility(View.GONE);
+                mHeaderEncView.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2s);
                 }
@@ -481,7 +483,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncCheckBox.setVisibility(View.VISIBLE);
+                mHeaderEncView.setVisibility(View.VISIBLE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v3);
                 }
@@ -503,7 +505,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncCheckBox.setVisibility(View.GONE);
+                mHeaderEncView.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v23);
                 }

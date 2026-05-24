@@ -1,6 +1,8 @@
 package wang.switchy.hin2n.activity;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
@@ -92,6 +94,15 @@ public class WebViewActivity extends BaseActivity {
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        Log.w("WebViewActivity", "Unable to open url: " + url, e);
+                    }
+                    return true;
+                }
                 view.loadUrl(url);
                 return true;
             }

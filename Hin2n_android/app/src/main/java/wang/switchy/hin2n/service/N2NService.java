@@ -194,12 +194,12 @@ public class N2NService extends VpnService {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             stopForeground(true);
 
+        mStopInProgress = true;
         ThreadUtils.cachedThreadExecutor(new Runnable() {
             @Override
             public void run() {
                 /* Blocking call */
                 stopEdge();
-                mStopInProgress = true;
                 ThreadUtils.mainThreadExecutor(new Runnable() {
                     @Override
                     public void run() {

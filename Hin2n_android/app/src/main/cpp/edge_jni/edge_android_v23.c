@@ -117,8 +117,11 @@ int start_edge_v23(n2n_edge_status_t *status) {
 
     log_file = fopen(cmd->logpath, "a");
     if (log_file) {
+        setvbuf(log_file, NULL, _IONBF, 0);
         dup2(fileno(log_file), STDOUT_FILENO);
         dup2(fileno(log_file), STDERR_FILENO);
+        setvbuf(stdout, NULL, _IONBF, 0);
+        setvbuf(stderr, NULL, _IONBF, 0);
     }
 
     pthread_mutex_lock(&g_status->mutex);
