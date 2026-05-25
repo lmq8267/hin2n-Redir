@@ -6,10 +6,10 @@
     <string name="item_default_netmask">255.255.255.0</string>
     <string name="item_default_community"></string>
     <string name="item_default_password"></string>
-    <string name="item_default_supernode_v1">hin2n.nton.eu.org:10082</string>
-    <string name="item_default_supernode_v2">hin2n.nton.eu.org:10086</string>
-    <string name="item_default_supernode_v2s">hin2n.nton.eu.org:10088</string>
-    <string name="item_default_supernode_v3">supernode.ntop.org:7777</string>
+    <string name="item_default_supernode_v1">ouno.eu.org:10082</string>
+    <string name="item_default_supernode_v2">ouno.eu.org:10086</string>
+    <string name="item_default_supernode_v2s">ouno.eu.org:10088</string>
+    <string name="item_default_supernode_v3">ouno.eu.org:10090</string>
     <string name="item_default_supernode_v23">ouno.eu.org:10084</string>
     <string name="item_default_supernode_backup"></string>
     <string name="item_default_macaddr"></string>

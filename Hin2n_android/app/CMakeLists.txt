@@ -216,14 +216,13 @@ add_library(edge_v23 SHARED
         src/main/cpp/n2n_v2_ipv6/n2n_keyfile.c
         src/main/cpp/n2n_v2_ipv6/minilzo.c
         src/main/cpp/n2n_v2_ipv6/upnp.c
-        src/main/cpp/n2n_v2_ipv6/edge.c
+        src/main/cpp/edge_jni/edge_v23_embedded.c
         src/main/cpp/edge_jni/tuntap_android_v23.c
         src/main/cpp/edge_jni/edge_android_v23.c
         src/main/cpp/edge_jni/ifaddrs_android_v23.c
         )
 target_compile_definitions(edge_v23 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
 target_compile_definitions(edge_v23 PRIVATE N2N_VERSION=\"${N2N_V23_VERSION}\")
-set_source_files_properties(src/main/cpp/n2n_v2_ipv6/edge.c PROPERTIES COMPILE_DEFINITIONS "main=edge_v23_main")
 set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket -Wl,--wrap=exit -Wl,--wrap=abort -Wl,--wrap=setuid -Wl,--wrap=setgid -Wl,--wrap=setreuid -Wl,--wrap=setregid")
 target_include_directories(edge_v23 PUBLIC
         src/main/cpp/n2n_v2_ipv6

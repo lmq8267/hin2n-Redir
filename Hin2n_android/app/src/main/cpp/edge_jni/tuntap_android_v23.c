@@ -8,13 +8,71 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <jni.h>
+#include <netinet/in.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <tun2tap/tun2tap.h>
 #include <edge_jni/edge_jni.h>
 
 static int placeholder_read_fd = -1;
 static int placeholder_write_fd = -1;
+static time_t last_arp_timer = 0;
+
+static uint32_t prefix_to_netmask(uint8_t prefixlen) {
+    uint32_t mask;
+
+    if (prefixlen == 0) {
+        return 0;
+    }
+    if (prefixlen >= 32) {
+        return 0xffffffffU;
+    }
+    mask = 0xffffffffU << (32 - prefixlen);
+    return mask;
+}
+
+static void configure_arp(const tuntap_dev *device) {
+    uint32_t ip_host;
+    uint32_t mask_host;
+    uip_ipaddr_t ipaddr;
+    struct uip_eth_addr eaddr;
+
+    if (!device || device->ip_addr == 0) {
+        return;
+    }
+
+    ip_host = ntohl(device->ip_addr);
+    mask_host = prefix_to_netmask(device->ip_prefixlen);
+
+    uip_ipaddr(ipaddr,
+               (ip_host >> 24) & 0xff,
+               (ip_host >> 16) & 0xff,
+               (ip_host >> 8) & 0xff,
+               ip_host & 0xff);
+    uip_sethostaddr(ipaddr);
+
+    uip_ipaddr(ipaddr,
+               (mask_host >> 24) & 0xff,
+               (mask_host >> 16) & 0xff,
+               (mask_host >> 8) & 0xff,
+               mask_host & 0xff);
+    uip_setnetmask(ipaddr);
+
+    memcpy(eaddr.addr, device->mac_addr, sizeof(eaddr.addr));
+    uip_setethaddr(eaddr);
+    uip_arp_init();
+    last_arp_timer = time(NULL);
+}
+
+static void tick_arp_timer(void) {
+    time_t now = time(NULL);
+
+    if (last_arp_timer == 0 || now - last_arp_timer >= 10) {
+        uip_arp_timer();
+        last_arp_timer = now;
+    }
+}
 
 static int clear_nonblock(int fd) {
     int val;
@@ -161,24 +219,49 @@ int tuntap_open(tuntap_dev *device, struct tuntap_config *config) {
     device->routes_count = config->routes_count;
     device->routes = config->routes;
     strncpy(device->dev_name, config->if_name ? config->if_name : "edge_v23", N2N_IFNAMSIZ - 1);
+    configure_arp(device);
 
     return device->fd;
 }
 
 ssize_t tuntap_read(struct tuntap_dev *tuntap, unsigned char *buf, size_t len) {
     ssize_t rlen;
+    uint8_t version;
 
     if (!tuntap || tuntap->fd < 0 || len <= UIP_LLH_LEN) {
         return -1;
     }
 
+    tick_arp_timer();
     memset(buf, 0, UIP_LLH_LEN);
     rlen = read(tuntap->fd, buf + UIP_LLH_LEN, len - UIP_LLH_LEN);
     if (rlen < 0) {
         return rlen;
     }
 
-    return rlen + UIP_LLH_LEN;
+    if (rlen == 0) {
+        return 0;
+    }
+
+    version = (buf[UIP_LLH_LEN] >> 4) & 0x0f;
+    if (version == 4) {
+        uip_buf = buf;
+        uip_len = (u16_t)rlen;
+        uip_arp_out();
+        traceEvent(TRACE_DEBUG, "v23 Android TUN IPv4 packet converted to TAP frame (%u)",
+                   (unsigned int)uip_len);
+        return uip_len;
+    }
+
+    if (version == 6) {
+        memset(buf, 0xff, N2N_MAC_SIZE);
+        memcpy(buf + N2N_MAC_SIZE, tuntap->mac_addr, N2N_MAC_SIZE);
+        buf[12] = 0x86;
+        buf[13] = 0xdd;
+        return rlen + UIP_LLH_LEN;
+    }
+
+    return 0;
 }
 
 ssize_t tuntap_write(struct tuntap_dev *tuntap, unsigned char *buf, size_t len) {
@@ -248,6 +331,7 @@ int set_ipaddress(const tuntap_dev *device, int static_address) {
     close_placeholder_fd();
     mutable_device->fd = vpn_fd;
     g_status->cmd.vpn_fd = vpn_fd;
+    configure_arp(mutable_device);
     return 0;
 }
 

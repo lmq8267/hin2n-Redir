@@ -26,6 +26,7 @@ extern void __real_abort(void);
 n2n_edge_status_t *g_status;
 
 static int protect_socket_v23(int fd);
+static void log_edge_v23_command_line(int argc, char *argv[]);
 static jmp_buf exit_jmp;
 static volatile int exit_trap_enabled = 0;
 static volatile int exit_trap_status = 1;
@@ -141,6 +142,33 @@ static int prefix_from_netmask(const char *netmask) {
     return prefix;
 }
 
+static void log_edge_v23_command_line(int argc, char *argv[]) {
+    char line[1024];
+    size_t used = 0;
+    int i;
+
+    line[0] = '\0';
+    for (i = 0; i < argc && used < sizeof(line); ++i) {
+        const char *arg = argv[i] ? argv[i] : "";
+        int written;
+
+        if (i > 0 && argv[i - 1] &&
+            (strcmp(argv[i - 1], "-c") == 0 || strcmp(argv[i - 1], "-k") == 0)) {
+            arg = "***";
+        }
+        written = snprintf(line + used, sizeof(line) - used, "%s%s", i == 0 ? "" : " ", arg);
+        if (written < 0) {
+            break;
+        }
+        if ((size_t)written >= sizeof(line) - used) {
+            used = sizeof(line) - 1;
+            break;
+        }
+        used += (size_t)written;
+    }
+    traceEvent(TRACE_NORMAL, "command: %s", line);
+}
+
 int start_edge_v23(n2n_edge_status_t *status) {
     char ip_arg[64];
     char mtu_arg[16];
@@ -227,6 +255,7 @@ int start_edge_v23(n2n_edge_status_t *status) {
         argv[argc++] = trace_args[i - 2];
     }
     argv[argc] = NULL;
+    log_edge_v23_command_line(argc, argv);
 
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_CONNECTED;

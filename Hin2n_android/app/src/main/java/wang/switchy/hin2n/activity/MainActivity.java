@@ -528,7 +528,12 @@ public class MainActivity extends BaseActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onStopEvent(StopEvent event) {
-        showLog(false);
+        mRecyclerView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                showLog(false);
+            }
+        }, 800);
         mConnectBtn.postDelayed(new Runnable() {
             @Override
             public void run() {
