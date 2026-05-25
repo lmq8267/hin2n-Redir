@@ -130,7 +130,7 @@ typedef struct tuntap_dev {
  * same value if they are to understand each other. */
 #define N2N_COMPRESSION_ENABLED 1
 
-#define DEFAULT_MTU   1400
+#define DEFAULT_MTU   1350
 
 /* Maximum enum value is 255 due to marshalling into 1 byte */
 enum packet_type {

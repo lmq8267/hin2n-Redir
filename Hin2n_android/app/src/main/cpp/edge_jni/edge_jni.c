@@ -86,9 +86,9 @@ JNIEXPORT jboolean JNICALL Java_wang_switchy_hin2n_service_N2NService_startEdge(
             status.start_edge = start_edge_v3;
             status.stop_edge = stop_edge_v3;
             break;
-        case EDGE_TYPE_V23:
-            status.start_edge = start_edge_v23;
-            status.stop_edge = stop_edge_v23;
+        case EDGE_TYPE_V2_IPV6:
+            status.start_edge = start_edge_v2_ipv6;
+            status.stop_edge = stop_edge_v2_ipv6;
             break;
         default:
             ResetEdgeStatus(env, 1 /* cleanup*/);
@@ -181,7 +181,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
     {
         jint jiEdgeType = (*env)->GetIntField(env, jcmd,
                                               (*env)->GetFieldID(env, cls, "edgeType", "I"));
-        if (jiEdgeType < EDGE_TYPE_V1 || jiEdgeType > EDGE_TYPE_V23) {
+        if (jiEdgeType < EDGE_TYPE_V1 || jiEdgeType > EDGE_TYPE_V2_IPV6) {
             return 1;
         }
         status.edge_type = jiEdgeType;
@@ -304,7 +304,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         }
     }
     // encKeyFile
-    if (EDGE_TYPE_V2 <= status.edge_type && status.edge_type <= EDGE_TYPE_V23) {
+    if (EDGE_TYPE_V2 <= status.edge_type && status.edge_type <= EDGE_TYPE_V2_IPV6) {
         jstring jsEncKeyFile = (*env)->GetObjectField(env, jcmd,
                                                       (*env)->GetFieldID(env, cls, "encKeyFile",
                                                                          "Ljava/lang/String;"));
@@ -338,7 +338,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
     // mtu
     {
         jint jiMtu = (*env)->GetIntField(env, jcmd, (*env)->GetFieldID(env, cls, "mtu", "I"));
-        if (jiMtu <= 0) {
+        if (jiMtu < 0) {
             return 1;
         }
         cmd->mtu = jiMtu;
@@ -347,7 +347,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
 #endif /* #ifndef NDEBUG */
     }
     // localIP
-    if (status.edge_type == EDGE_TYPE_V2S || status.edge_type == EDGE_TYPE_V23) {
+    if (status.edge_type == EDGE_TYPE_V2S || status.edge_type == EDGE_TYPE_V2_IPV6) {
         jstring jsLocalIP = (*env)->GetObjectField(env, jcmd,
                                                    (*env)->GetFieldID(env, cls, "localIP",
                                                                       "Ljava/lang/String;"));
@@ -452,8 +452,8 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "encryptionMode = %s", cmd->encryption_mode);
 #endif /* #ifndef NDEBUG */
     }
-    // httpTunnel; v23 reuses this field to store "force IPv6 supernode DNS".
-    if (status.edge_type == EDGE_TYPE_V1 || status.edge_type == EDGE_TYPE_V23) {
+    // httpTunnel; v2_ipv6 reuses this field to store "force IPv6 supernode DNS".
+    if (status.edge_type == EDGE_TYPE_V1 || status.edge_type == EDGE_TYPE_V2_IPV6) {
         jboolean jbHttpTunnel = (*env)->GetBooleanField(env, jcmd,
                                                         (*env)->GetFieldID(env, cls, "httpTunnel",
                                                                            "Z"));
@@ -528,7 +528,7 @@ void InitEdgeStatus(void) {
     memset(&status.cmd, 0, sizeof(status.cmd));
     status.cmd.enc_key = NULL;
     status.cmd.enc_key_file = NULL;
-    status.cmd.mtu = 1400;
+    status.cmd.mtu = 0;
     status.cmd.holepunch_interval = EDGE_CMD_HOLEPUNCH_INTERVAL;
     status.cmd.re_resolve_supernode_ip = 0;
     status.cmd.local_port = 0;

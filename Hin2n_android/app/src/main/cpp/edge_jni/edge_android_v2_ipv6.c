@@ -16,17 +16,17 @@
 
 #include "n2n.h"
 
-#define V23_MGMT_PORT 5664
+#define V2_IPV6_MGMT_PORT 5664
 
-extern int edge_v23_main(int argc, char *argv[]);
+extern int edge_v2_ipv6_main(int argc, char *argv[]);
 extern int __real_socket(int domain, int type, int protocol);
 extern void __real_exit(int status);
 extern void __real_abort(void);
 
 n2n_edge_status_t *g_status;
 
-static int protect_socket_v23(int fd);
-static void log_edge_v23_command_line(int argc, char *argv[]);
+static int protect_socket_v2_ipv6(int fd);
+static void log_edge_v2_ipv6_command_line(int argc, char *argv[]);
 static jmp_buf exit_jmp;
 static volatile int exit_trap_enabled = 0;
 static volatile int exit_trap_status = 1;
@@ -34,7 +34,7 @@ static volatile int exit_trap_status = 1;
 void __wrap_exit(int status) {
     if (exit_trap_enabled) {
         exit_trap_status = status == 0 ? 1 : status;
-        __android_log_print(ANDROID_LOG_ERROR, "edge_v23", "Intercepted exit(%d)", status);
+        __android_log_print(ANDROID_LOG_ERROR, "edge_v2_ipv6", "Intercepted exit(%d)", status);
         longjmp(exit_jmp, 1);
     }
     __real_exit(status);
@@ -43,30 +43,30 @@ void __wrap_exit(int status) {
 void __wrap_abort(void) {
     if (exit_trap_enabled) {
         exit_trap_status = 134;
-        __android_log_write(ANDROID_LOG_ERROR, "edge_v23", "Intercepted abort()");
+        __android_log_write(ANDROID_LOG_ERROR, "edge_v2_ipv6", "Intercepted abort()");
         longjmp(exit_jmp, 1);
     }
     __real_abort();
 }
 
 int __wrap_setuid(uid_t uid) {
-    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setuid(%u) on Android", (unsigned int)uid);
+    __android_log_print(ANDROID_LOG_WARN, "edge_v2_ipv6", "Skipped setuid(%u) on Android", (unsigned int)uid);
     return 0;
 }
 
 int __wrap_setgid(gid_t gid) {
-    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setgid(%u) on Android", (unsigned int)gid);
+    __android_log_print(ANDROID_LOG_WARN, "edge_v2_ipv6", "Skipped setgid(%u) on Android", (unsigned int)gid);
     return 0;
 }
 
 int __wrap_setreuid(uid_t ruid, uid_t euid) {
-    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setreuid(%u, %u) on Android",
+    __android_log_print(ANDROID_LOG_WARN, "edge_v2_ipv6", "Skipped setreuid(%u, %u) on Android",
                         (unsigned int)ruid, (unsigned int)euid);
     return 0;
 }
 
 int __wrap_setregid(gid_t rgid, gid_t egid) {
-    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setregid(%u, %u) on Android",
+    __android_log_print(ANDROID_LOG_WARN, "edge_v2_ipv6", "Skipped setregid(%u, %u) on Android",
                         (unsigned int)rgid, (unsigned int)egid);
     return 0;
 }
@@ -75,13 +75,13 @@ int __wrap_socket(int domain, int type, int protocol) {
     int fd = __real_socket(domain, type, protocol);
 
     if (fd >= 0) {
-        protect_socket_v23(fd);
+        protect_socket_v2_ipv6(fd);
     }
 
     return fd;
 }
 
-static int protect_socket_v23(int fd) {
+static int protect_socket_v2_ipv6(int fd) {
     JNIEnv *env = NULL;
 
     if (!g_status || !g_status->jvm || !g_status->jobj_service || fd < 0) {
@@ -142,7 +142,7 @@ static int prefix_from_netmask(const char *netmask) {
     return prefix;
 }
 
-static void log_edge_v23_command_line(int argc, char *argv[]) {
+static void log_edge_v2_ipv6_command_line(int argc, char *argv[]) {
     char line[1024];
     size_t used = 0;
     int i;
@@ -169,7 +169,7 @@ static void log_edge_v23_command_line(int argc, char *argv[]) {
     traceEvent(TRACE_NORMAL, "command: %s", line);
 }
 
-int start_edge_v23(n2n_edge_status_t *status) {
+int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     char ip_arg[64];
     char mtu_arg[16];
     char local_port_arg[16];
@@ -200,13 +200,15 @@ int start_edge_v23(n2n_edge_status_t *status) {
     g_status->report_edge_status();
 
     snprintf(ip_arg, sizeof(ip_arg), "static:%s/%d", cmd->ip_addr, prefix_from_netmask(cmd->ip_netmask));
-    snprintf(mtu_arg, sizeof(mtu_arg), "%u", cmd->mtu);
+    if (cmd->mtu > 0) {
+        snprintf(mtu_arg, sizeof(mtu_arg), "%u", cmd->mtu);
+    }
     snprintf(local_port_arg, sizeof(local_port_arg), "%u", cmd->local_port);
 
-    argv[argc++] = "edge_v23";
+    argv[argc++] = "edge_v2_ipv6";
     argv[argc++] = "-f";
     argv[argc++] = "-d";
-    argv[argc++] = "edge_v23";
+    argv[argc++] = "edge_ipv6";
     if (cmd->ip_mode == 0) {
         argv[argc++] = "-a";
         argv[argc++] = ip_arg;
@@ -238,8 +240,10 @@ int start_edge_v23(n2n_edge_status_t *status) {
         argv[argc++] = "-m";
         argv[argc++] = cmd->mac_addr;
     }
-    argv[argc++] = "-M";
-    argv[argc++] = mtu_arg;
+    if (cmd->mtu > 0) {
+        argv[argc++] = "-M";
+        argv[argc++] = mtu_arg;
+    }
     if (cmd->local_port > 0) {
         argv[argc++] = "-p";
         argv[argc++] = local_port_arg;
@@ -255,7 +259,7 @@ int start_edge_v23(n2n_edge_status_t *status) {
         argv[argc++] = trace_args[i - 2];
     }
     argv[argc] = NULL;
-    log_edge_v23_command_line(argc, argv);
+    log_edge_v2_ipv6_command_line(argc, argv);
 
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_CONNECTED;
@@ -268,7 +272,7 @@ int start_edge_v23(n2n_edge_status_t *status) {
     exit_trap_status = 1;
     exit_trap_enabled = 1;
     if (setjmp(exit_jmp) == 0) {
-        ret = edge_v23_main(argc, argv);
+        ret = edge_v2_ipv6_main(argc, argv);
     } else {
         ret = exit_trap_status;
     }
@@ -285,7 +289,7 @@ int start_edge_v23(n2n_edge_status_t *status) {
     return ret;
 }
 
-int stop_edge_v23(void) {
+int stop_edge_v2_ipv6(void) {
     int fd = open_socket(0, 0 /* bind LOOPBACK*/);
     struct sockaddr_in peer_addr;
 
@@ -295,7 +299,7 @@ int stop_edge_v23(void) {
 
     memset(&peer_addr, 0, sizeof(peer_addr));
     peer_addr.sin_family = PF_INET;
-    peer_addr.sin_port = htons(V23_MGMT_PORT);
+    peer_addr.sin_port = htons(V2_IPV6_MGMT_PORT);
     peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     sendto(fd, "stop", 4, 0, (struct sockaddr *)&peer_addr, sizeof(peer_addr));
     close(fd);

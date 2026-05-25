@@ -35,7 +35,7 @@ public class WebViewActivity extends BaseActivity {
     public static final int TYPE_WEB_VIEW_FEEDBACK = 1;
     public static final int TYPE_WEB_VIEW_SHARE = 2;
     public static final int TYPE_WEB_VIEW_CONTACT = 3;
-    public static final int TYPE_WEB_VIEW_V23 = 4;
+    public static final int TYPE_WEB_VIEW_V2_IPV6 = 4;
     public static final int TYPE_WEB_VIEW_UPDATE = 5;
 
     public static final String ABOUT_URL = "https://github.com/lmq8267/hin2n-Redir#hin2n-";
@@ -43,7 +43,7 @@ public class WebViewActivity extends BaseActivity {
     public static final String UPDATE_URL = "https://github.com/lmq8267/hin2n-Redir/releases";
     public static final String CONTACT_URL = "https://github.com/lmq8267/hin2n-Redir#%E4%BA%A4%E6%B5%81%E7%BE%A4";
     public static final String FEEDBACK_URL = "https://github.com/lmq8267/hin2n-Redir/issues";
-    public static final String V23_URL = "https://github.com/lucktu/n2n6";
+    public static final String V2_IPV6_URL = "https://github.com/lucktu/n2n6";
 
     private WebView mWebView;
     private AVLoadingIndicatorView mLoadingView;
@@ -151,9 +151,9 @@ public class WebViewActivity extends BaseActivity {
                 mCommonTitleTemplate.setTitleText(getString(R.string.contact));
                 mWebView.loadUrl(CONTACT_URL);
                 break;
-            case TYPE_WEB_VIEW_V23:
-                mCommonTitleTemplate.setTitleText("v23");
-                mWebView.loadUrl(V23_URL);
+            case TYPE_WEB_VIEW_V2_IPV6:
+                mCommonTitleTemplate.setTitleText("v2-ipv6");
+                mWebView.loadUrl(V2_IPV6_URL);
                 break;
             case TYPE_WEB_VIEW_UPDATE:
                 mCommonTitleTemplate.setTitleText(getString(R.string.check_update));

@@ -168,7 +168,7 @@ typedef struct tuntap_dev {
  * same value if they are to understand each other. */
 #define N2N_COMPRESSION_ENABLED 1
 
-#define DEFAULT_MTU   1400
+#define DEFAULT_MTU   1350
 
 /* Frequency registration should be attempted to purge and timeout value after
  * which to purge*/

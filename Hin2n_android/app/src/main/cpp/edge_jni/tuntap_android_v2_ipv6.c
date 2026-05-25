@@ -95,12 +95,15 @@ static int clear_nonblock(int fd) {
     return 0;
 }
 
-static int establish_vpn_service_ip(uint32_t ip_addr, uint8_t ip_prefixlen) {
+static int establish_vpn_service_ip(uint32_t ip_addr, uint8_t ip_prefixlen,
+                                    const struct in6_addr *ip6_addr, uint8_t ip6_prefixlen) {
     JNIEnv *env = NULL;
     jclass vpn_service_cls;
     jmethodID mid;
     jstring j_ip;
+    jstring j_ip6 = NULL;
     char ip_str[INET_ADDRSTRLEN];
+    char ip6_str[INET6_ADDRSTRLEN];
     int vpn_fd;
     int attached = 0;
 
@@ -123,7 +126,7 @@ static int establish_vpn_service_ip(uint32_t ip_addr, uint8_t ip_prefixlen) {
         return -1;
     }
 
-    mid = (*env)->GetMethodID(env, vpn_service_cls, "EstablishVpnService", "(Ljava/lang/String;I)I");
+    mid = (*env)->GetMethodID(env, vpn_service_cls, "EstablishVpnService", "(Ljava/lang/String;ILjava/lang/String;I)I");
     if (!mid) {
         (*env)->DeleteLocalRef(env, vpn_service_cls);
         if (attached) {
@@ -146,13 +149,28 @@ static int establish_vpn_service_ip(uint32_t ip_addr, uint8_t ip_prefixlen) {
         return -1;
     }
 
-    vpn_fd = (*env)->CallIntMethod(env, g_status->jobj_service, mid, j_ip, (jint)ip_prefixlen);
+    if (ip6_addr && ip6_prefixlen > 0 && inet_ntop(AF_INET6, ip6_addr, ip6_str, sizeof(ip6_str))) {
+        j_ip6 = (*env)->NewStringUTF(env, ip6_str);
+        if (!j_ip6) {
+            (*env)->DeleteLocalRef(env, j_ip);
+            (*env)->DeleteLocalRef(env, vpn_service_cls);
+            if (attached) {
+                (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
+            }
+            return -1;
+        }
+    }
+
+    vpn_fd = (*env)->CallIntMethod(env, g_status->jobj_service, mid, j_ip, (jint)ip_prefixlen, j_ip6, (jint)ip6_prefixlen);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->ExceptionClear(env);
         vpn_fd = -1;
     }
 
     (*env)->DeleteLocalRef(env, j_ip);
+    if (j_ip6) {
+        (*env)->DeleteLocalRef(env, j_ip6);
+    }
     (*env)->DeleteLocalRef(env, vpn_service_cls);
     if (attached) {
         (*g_status->jvm)->DetachCurrentThread(g_status->jvm);
@@ -165,7 +183,8 @@ static int establish_vpn_service(const struct tuntap_config *config) {
     if (!config) {
         return -1;
     }
-    return establish_vpn_service_ip(config->ip_addr, config->ip_prefixlen);
+    return establish_vpn_service_ip(config->ip_addr, config->ip_prefixlen,
+                                    &config->ip6_addr, config->ip6_prefixlen);
 }
 
 static int open_placeholder_fd(void) {
@@ -218,7 +237,7 @@ int tuntap_open(tuntap_dev *device, struct tuntap_config *config) {
     device->mtu = config->mtu;
     device->routes_count = config->routes_count;
     device->routes = config->routes;
-    strncpy(device->dev_name, config->if_name ? config->if_name : "edge_v23", N2N_IFNAMSIZ - 1);
+    strncpy(device->dev_name, config->if_name ? config->if_name : "edge_ipv6", N2N_IFNAMSIZ - 1);
     configure_arp(device);
 
     return device->fd;
@@ -248,7 +267,7 @@ ssize_t tuntap_read(struct tuntap_dev *tuntap, unsigned char *buf, size_t len) {
         uip_buf = buf;
         uip_len = (u16_t)rlen;
         uip_arp_out();
-        traceEvent(TRACE_DEBUG, "v23 Android TUN IPv4 packet converted to TAP frame (%u)",
+        traceEvent(TRACE_DEBUG, "v2_ipv6 Android TUN IPv4 packet converted to TAP frame (%u)",
                    (unsigned int)uip_len);
         return uip_len;
     }
@@ -315,7 +334,8 @@ int set_ipaddress(const tuntap_dev *device, int static_address) {
         return 0;
     }
 
-    vpn_fd = establish_vpn_service_ip(mutable_device->ip_addr, mutable_device->ip_prefixlen);
+    vpn_fd = establish_vpn_service_ip(mutable_device->ip_addr, mutable_device->ip_prefixlen,
+                                      &mutable_device->ip6_addr, mutable_device->ip6_prefixlen);
     if (vpn_fd < 0 || clear_nonblock(vpn_fd) < 0) {
         if (vpn_fd >= 0) {
             close(vpn_fd);

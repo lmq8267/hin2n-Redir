@@ -109,7 +109,7 @@ enum sn_purge {SN_PURGEABLE = 0, SN_UNPURGEABLE = 1};
 /* REGISTER_SUPER_ACK packet hash length with user/pw auth, up to 16 bytes */
 #define N2N_REG_SUP_HASH_CHECK_LEN           16
 
-#define DEFAULT_MTU     1290
+#define DEFAULT_MTU     1350
 
 #define HASH_ADD_PEER(head,add) \
     HASH_ADD(hh,head,mac_addr,sizeof(n2n_mac_t),add)

@@ -5,7 +5,7 @@ import java.util.Vector;
 import java.net.InetAddress;
 
 public class EdgeCmd {
-    public int edgeType;    // 0: v1, 1: v2, 2: v2s, 3: v3, 4: v23
+    public int edgeType;    // 0: v1, 1: v2, 2: v2s, 3: v3, 4: v2-ipv6
     public int ipMode;
     public String ipAddr;
     public String ipNetmask;
@@ -120,7 +120,7 @@ public class EdgeCmd {
         if (!checkMacAddr(macAddr)) {
             invalids.add("macAddr");
         }
-        if (!checkInt(mtu, 46, 1500)) {
+        if (mtu < 0) {
             invalids.add("mut");
         }
         if (localIP != null && !localIP.isEmpty()
@@ -318,7 +318,7 @@ public class EdgeCmd {
     }
 
     public static boolean checkMtu(int mtu) {
-        return checkInt(mtu, 46, 1500);
+        return mtu >= 0;
     }
 
     public static boolean checkInt(int n, int min, int max) {

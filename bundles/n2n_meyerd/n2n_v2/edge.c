@@ -3211,6 +3211,7 @@ int start_edge_v2s(n2n_edge_status_t* status)
     }
     g_status = status;
     n2n_edge_cmd_t* cmd = &status->cmd;
+    unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
 
     keep_running = 0;
     pthread_mutex_lock(&g_status->mutex);
@@ -3350,7 +3351,7 @@ int start_edge_v2s(n2n_edge_status_t* status)
     {
         traceEvent(TRACE_NORMAL, "ip_mode='%s'", ip_mode);
     }
-    if(tuntap_open(&(eee.device), tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, cmd->mtu) < 0)
+    if(tuntap_open(&(eee.device), tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, mtu) < 0)
     {
         traceEvent(TRACE_ERROR, "Failed in tuntap_open");
         free(encrypt_key);

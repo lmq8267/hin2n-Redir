@@ -61,7 +61,7 @@ enum
     EDGE_TYPE_V2,
     EDGE_TYPE_V2S,
     EDGE_TYPE_V3,
-    EDGE_TYPE_V23
+    EDGE_TYPE_V2_IPV6
 };
 
 typedef struct n2n_edge_status_st {
@@ -90,8 +90,8 @@ extern int start_edge_v2s(n2n_edge_status_t* status);
 extern int stop_edge_v2s(void);
 extern int start_edge_v3(n2n_edge_status_t* status);
 extern int stop_edge_v3(void);
-extern int start_edge_v23(n2n_edge_status_t* status);
-extern int stop_edge_v23(void);
+extern int start_edge_v2_ipv6(n2n_edge_status_t* status);
+extern int stop_edge_v2_ipv6(void);
 extern void report_edge_status(void);
 
 #endif /* __ANDROID_NDK__ */

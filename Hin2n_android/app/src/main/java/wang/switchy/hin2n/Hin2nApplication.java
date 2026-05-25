@@ -41,7 +41,7 @@ public class Hin2nApplication extends MultiDexApplication {
         System.loadLibrary("n2n_v1");
         System.loadLibrary("edge_v2s");
         System.loadLibrary("edge_v2");
-        System.loadLibrary("edge_v23");
+        System.loadLibrary("edge_v2_ipv6");
         System.loadLibrary("edge_v1");
         System.loadLibrary("edge_jni");
     }

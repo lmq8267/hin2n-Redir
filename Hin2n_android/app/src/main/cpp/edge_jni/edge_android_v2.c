@@ -406,6 +406,7 @@ int start_edge_v2(n2n_edge_status_t *status) {
     }
     g_status = status;
     n2n_edge_cmd_t *cmd = &status->cmd;
+    unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
 
     setTraceLevel(cmd->trace_vlevel);
     FILE *fp = fopen(cmd->logpath, "a");
@@ -495,7 +496,7 @@ int start_edge_v2(n2n_edge_status_t *status) {
     }
 
     /* Open the TAP device */
-    if (tuntap_open(&dev, tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, cmd->mtu) < 0) {
+    if (tuntap_open(&dev, tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, mtu) < 0) {
         traceEvent(TRACE_ERROR, "Failed in tuntap_open");
         rv = 1;
         goto cleanup;
@@ -647,6 +648,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
     g_stop_initial = 0;
     g_status = status;
     n2n_edge_cmd_t *cmd = &status->cmd;
+    unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
 
     setTraceLevel(cmd->trace_vlevel);
     FILE *fp = fopen(cmd->logpath, "a");
@@ -762,7 +764,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
     strncpy(eee->tuntap_priv_conf.ip_addr, ip_addr, N2N_NETMASK_STR_SIZE - 1);
     strncpy(eee->tuntap_priv_conf.netmask, netmask, N2N_NETMASK_STR_SIZE - 1);
     strncpy(eee->tuntap_priv_conf.device_mac, device_mac, N2N_MACNAMSIZ - 1);
-    eee->tuntap_priv_conf.mtu = cmd->mtu;
+    eee->tuntap_priv_conf.mtu = mtu;
     
     if((0 == strcmp("static", eee->tuntap_priv_conf.ip_mode)) ||
          ((eee->tuntap_priv_conf.ip_mode[0] == '\0') && (eee->tuntap_priv_conf.ip_addr[0] != '\0'))) {

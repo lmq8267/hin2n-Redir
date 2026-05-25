@@ -33,7 +33,7 @@
         <item>n2n_v2</item>
         <item>n2n_v2s</item>
         <item>n2n_v3</item>
-        <item>n2n_v23</item>
+        <item>n2n_v2-ipv6</item>
     </string-array>
 
     <string name="trace_level_error">ERROR</string>
@@ -56,11 +56,11 @@
     <string name="supernode_2">Supernode 2</string> 
     <string name="hole_punch_interval">Hole-punch interval(s)</string> 
     <string name="local_ip">Local IP</string> 
-    <string name="v23_ipv6_address">IPv6 address/prefix</string>
-    <string name="v23_supernode_address_family">Supernode DNS address family</string>
-    <string name="v23_address_family_auto">Auto</string>
-    <string name="v23_address_family_ipv4">IPv4</string>
-    <string name="v23_address_family_ipv6">IPv6</string>
+    <string name="v2_ipv6_address">IPv6 address/prefix</string>
+    <string name="v2_ipv6_supernode_address_family">Supernode DNS address family</string>
+    <string name="v2_ipv6_address_family_auto">Auto</string>
+    <string name="v2_ipv6_address_family_ipv4">IPv4</string>
+    <string name="v2_ipv6_address_family_ipv6">IPv6</string>
     <string name="automatically_detect_local_ip">Automatically detect local IP</string> 
     <string name="local_port">Local port</string> 
     <string name="gateway_ip_address">Gateway IP address</string> 
@@ -98,7 +98,7 @@
     <string name="version_v2s">v2s   </string>
     <string name="version_v2">v2    </string>
     <string name="version_v3">v3</string>
-    <string name="version_v23">v23</string>
+    <string name="version_v2_ipv6">v2-ipv6</string>
     <string name="default_netmask">255.255.255.0</string>
     <string name="follow_official_weibo">Follow official Weibo</string>
     <string name="unknown">Unknown</string>

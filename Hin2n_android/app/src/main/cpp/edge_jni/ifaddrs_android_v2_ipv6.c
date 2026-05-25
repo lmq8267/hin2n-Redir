@@ -1,5 +1,5 @@
 /*
- * Android API 17 does not export getifaddrs/freeifaddrs.  The v23 core uses
+ * Android API 17 does not export getifaddrs/freeifaddrs.  The v2_ipv6 core uses
  * them to detect local IPv6 capability, so provide a small Android
  * implementation backed by /proc/net/if_inet6.
  */

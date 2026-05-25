@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.VpnService;
 import android.os.*;
+import android.system.OsConstants;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -47,6 +48,8 @@ import static wang.switchy.hin2n.tool.N2nTools.getRoute;
 
 public class N2NService extends VpnService {
 
+    private static final int DEFAULT_MTU = 1350;
+
     public static N2NService INSTANCE;
 
     private ParcelFileDescriptor mParcelFileDescriptor = null;
@@ -71,23 +74,23 @@ public class N2NService extends VpnService {
     }
 
     public int EstablishVpnService(String ip, int mask) {
+        return EstablishVpnService(ip, mask, null, 0);
+    }
 
+    public int EstablishVpnService(String ip, int mask, String ip6, int ip6PrefixLength) {
+
+        int mtu = mN2nSettingInfo.getMtu() > 0 ? mN2nSettingInfo.getMtu() : DEFAULT_MTU;
         Builder builder = new Builder()
-                .setMtu(mN2nSettingInfo.getMtu())
+                .setMtu(mtu)
                 .addAddress(ip, mask)
                 .addRoute(getRoute(ip, mask), mask);
 
-        String localIP = mN2nSettingInfo.getLocalIP();
-        if (mN2nSettingInfo.getVersion() == 4 && localIP != null && !localIP.isEmpty()) {
-            String[] ipv6Prefix = localIP.split("/", -1);
-            if (ipv6Prefix.length == 2) {
-                try {
-                    InetAddress ipv6Address = InetAddress.getByName(ipv6Prefix[0]);
-                    builder.addAddress(ipv6Address, Integer.valueOf(ipv6Prefix[1]));
-                } catch (Exception e) {
-                    Log.e("N2NService", "Invalid v23 IPv6 address: " + localIP, e);
-                }
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            builder.allowFamily(OsConstants.AF_INET6);
+        }
+
+        if (mN2nSettingInfo.getVersion() == 4) {
+            addV2_IPV6Ipv6Address(builder, ip6, ip6PrefixLength);
         }
 
         if (!mN2nSettingInfo.getGatewayIp().isEmpty()) {
@@ -119,6 +122,58 @@ public class N2NService extends VpnService {
         }
 
         return mParcelFileDescriptor.detachFd();
+    }
+
+    private void addV2_IPV6Ipv6Address(Builder builder, String ip6, int ip6PrefixLength) {
+        String address = ip6;
+        int prefixLength = ip6PrefixLength;
+
+        if ((address == null || address.isEmpty()) && mN2nSettingInfo.getLocalIP() != null && !mN2nSettingInfo.getLocalIP().isEmpty()) {
+            String[] ipv6Prefix = mN2nSettingInfo.getLocalIP().split("/", -1);
+            if (ipv6Prefix.length == 2) {
+                address = ipv6Prefix[0];
+                try {
+                    prefixLength = Integer.valueOf(ipv6Prefix[1]);
+                } catch (NumberFormatException e) {
+                    Log.e("N2NService", "Invalid v2-ipv6 IPv6 prefix: " + mN2nSettingInfo.getLocalIP(), e);
+                    return;
+                }
+            }
+        }
+
+        if (address == null || address.isEmpty()) {
+            return;
+        }
+
+        try {
+            InetAddress ipv6Address = InetAddress.getByName(address);
+            builder.addAddress(ipv6Address, prefixLength);
+            if (prefixLength > 0) {
+                builder.addRoute(getNetworkAddress(ipv6Address, prefixLength).getHostAddress(), prefixLength);
+            }
+        } catch (Exception e) {
+            Log.e("N2NService", "Invalid v2-ipv6 IPv6 address: " + address + "/" + prefixLength, e);
+        }
+    }
+
+    private InetAddress getNetworkAddress(InetAddress address, int prefixLength) throws Exception {
+        byte[] bytes = address.getAddress();
+        if (prefixLength < 0 || prefixLength > bytes.length * 8) {
+            throw new IllegalArgumentException("Invalid prefix length: " + prefixLength);
+        }
+        int fullBytes = prefixLength / 8;
+        int remainingBits = prefixLength % 8;
+
+        if (remainingBits != 0 && fullBytes < bytes.length) {
+            bytes[fullBytes] = (byte) (bytes[fullBytes] & (0xff << (8 - remainingBits)));
+            fullBytes++;
+        }
+
+        for (int i = fullBytes; i < bytes.length; i++) {
+            bytes[i] = 0;
+        }
+
+        return InetAddress.getByAddress(bytes);
     }
 
     private void ensureMacAddr() {

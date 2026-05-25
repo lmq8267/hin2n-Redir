@@ -72,11 +72,11 @@
                         android:checked="true"
                         android:text="@string/version_v3"/>
                     <RadioButton
-                        android:id="@+id/rb_v23"
+                        android:id="@+id/rb_v2_ipv6"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@android:color/holo_blue_dark"
-                        android:text="@string/version_v23"/>
+                        android:text="@string/version_v2_ipv6"/>
                 </RadioGroup>
 
             </LinearLayout>
@@ -268,7 +268,8 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/tie_mtu"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:inputType="number" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -313,7 +314,7 @@
                 <LinearLayout
                     android:layout_marginTop="5dp"
                     android:layout_below="@id/check_box_local_ip"
-                    android:id="@+id/ll_v23_address_family"
+                    android:id="@+id/ll_v2_ipv6_address_family"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
@@ -321,37 +322,37 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/v23_supernode_address_family"/>
+                        android:text="@string/v2_ipv6_supernode_address_family"/>
 
                     <RadioGroup
-                        android:id="@+id/rg_v23_address_family"
+                        android:id="@+id/rg_v2_ipv6_address_family"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
                         <RadioButton
-                            android:id="@+id/rb_v23_addr_auto"
+                            android:id="@+id/rb_v2_ipv6_addr_auto"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/v23_address_family_auto"/>
+                            android:text="@string/v2_ipv6_address_family_auto"/>
 
                         <RadioButton
-                            android:id="@+id/rb_v23_addr_ipv4"
+                            android:id="@+id/rb_v2_ipv6_addr_ipv4"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/v23_address_family_ipv4"/>
+                            android:text="@string/v2_ipv6_address_family_ipv4"/>
 
                         <RadioButton
-                            android:id="@+id/rb_v23_addr_ipv6"
+                            android:id="@+id/rb_v2_ipv6_addr_ipv6"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/v23_address_family_ipv6"/>
+                            android:text="@string/v2_ipv6_address_family_ipv6"/>
                     </RadioGroup>
                 </LinearLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_marginTop="5dp"
-                    android:layout_below="@id/ll_v23_address_family"
+                    android:layout_below="@id/ll_v2_ipv6_address_family"
                     android:id="@+id/til_local_port"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
