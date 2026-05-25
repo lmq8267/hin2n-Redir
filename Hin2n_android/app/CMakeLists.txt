@@ -192,20 +192,11 @@ target_include_directories(edge_v3 PUBLIC
 target_link_libraries(edge_v3 uip c-ares libcurl)
 target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
 
-set(N2N_V23_TRANSFORM_SPECK_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/n2n_v2_ipv6/transform_speck.c")
-set(N2N_V23_TRANSFORM_SPECK_PATCHED "${CMAKE_CURRENT_BINARY_DIR}/n2n_v2_ipv6_transform_speck_patched.c")
-file(READ "${N2N_V23_TRANSFORM_SPECK_SOURCE}" N2N_V23_TRANSFORM_SPECK_CONTENT)
-string(REPLACE
-        "speck_ctr(outbuf + idx, inbuf, in_len, nonce, &priv->ctx);"
-        "#if defined(SPECK_CTX_BYVAL)\n    speck_ctr(outbuf + idx, inbuf, in_len, nonce, priv->ctx);\n#else\n    speck_ctr(outbuf + idx, inbuf, in_len, nonce, &priv->ctx);\n#endif"
-        N2N_V23_TRANSFORM_SPECK_CONTENT
-        "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
-string(REPLACE
-        "speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, &priv->ctx);"
-        "#if defined(SPECK_CTX_BYVAL)\n    speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, priv->ctx);\n#else\n    speck_ctr(outbuf, inbuf + idx, in_len - idx, nonce, &priv->ctx);\n#endif"
-        N2N_V23_TRANSFORM_SPECK_CONTENT
-        "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
-file(WRITE "${N2N_V23_TRANSFORM_SPECK_PATCHED}" "${N2N_V23_TRANSFORM_SPECK_CONTENT}")
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/n2n_v2_ipv6/CMakeLists.txt" N2N_V23_VERSION_LINE REGEX "^set\\(N2N_VERSION[ \t]+.*\\)")
+string(REGEX REPLACE "^set\\(N2N_VERSION[ \t]+\"?([^\"\\) ]+)\"?\\).*" "\\1" N2N_V23_VERSION "${N2N_V23_VERSION_LINE}")
+if(NOT N2N_V23_VERSION)
+message(FATAL_ERROR "Failed to read v23 N2N_VERSION from src/main/cpp/n2n_v2_ipv6/CMakeLists.txt")
+endif()
 
 add_library(edge_v23 SHARED
         src/main/cpp/n2n_v2_ipv6/n2n.c
@@ -221,7 +212,7 @@ add_library(edge_v23 SHARED
         src/main/cpp/n2n_v2_ipv6/transform_tf.c
         src/main/cpp/n2n_v2_ipv6/transform_aes.c
         src/main/cpp/n2n_v2_ipv6/transform_cc20.c
-        ${N2N_V23_TRANSFORM_SPECK_PATCHED}
+        src/main/cpp/n2n_v2_ipv6/transform_speck.c
         src/main/cpp/n2n_v2_ipv6/n2n_keyfile.c
         src/main/cpp/n2n_v2_ipv6/minilzo.c
         src/main/cpp/n2n_v2_ipv6/upnp.c
@@ -232,6 +223,7 @@ add_library(edge_v23 SHARED
         )
 target_compile_definitions(edge_v23 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
 set_source_files_properties(src/main/cpp/n2n_v2_ipv6/edge.c PROPERTIES COMPILE_DEFINITIONS "main=edge_v23_main")
+set_source_files_properties(src/main/cpp/n2n_v2_ipv6/version.c PROPERTIES COMPILE_OPTIONS "-UN2N_VERSION;-DN2N_VERSION=\\\"${N2N_V23_VERSION}\\\"")
 set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket -Wl,--wrap=exit -Wl,--wrap=abort -Wl,--wrap=setuid -Wl,--wrap=setgid -Wl,--wrap=setreuid -Wl,--wrap=setregid")
 target_include_directories(edge_v23 PUBLIC
         src/main/cpp/n2n_v2_ipv6

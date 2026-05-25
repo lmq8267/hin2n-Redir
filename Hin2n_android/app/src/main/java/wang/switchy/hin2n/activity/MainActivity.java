@@ -1,6 +1,8 @@
 package wang.switchy.hin2n.activity;
 
 import android.content.Context;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -10,6 +12,8 @@ import android.os.Build;
 import android.os.Bundle;
 
 import android.text.TextUtils;
+import android.view.ContextMenu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
@@ -74,6 +78,7 @@ public class MainActivity extends BaseActivity {
     private boolean mPendingLogStart = false;
     List<String> term = new ArrayList<>();
 
+    private static final int MENU_LOG_COPY_ALL = 1;
     private static final int REQUECT_CODE_SDCARD = 1;
     private static final int REQUECT_CODE_VPN = 2;
     private static final int REQUEST_CODE_VPN_FOR_START_AT_BOOT = 3;
@@ -216,6 +221,23 @@ public class MainActivity extends BaseActivity {
         mTermAdapter = new TermAdapter(null);
         mRecyclerView.setAdapter(mTermAdapter);
         mTermAdapter.setNewInstance(term);
+        registerForContextMenu(mRecyclerView);
+        mRecyclerView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                view.showContextMenu();
+                return true;
+            }
+        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mRecyclerView.setOnContextClickListener(new View.OnContextClickListener() {
+                @Override
+                public boolean onContextClick(View view) {
+                    view.showContextMenu();
+                    return true;
+                }
+            });
+        }
 
         TextView shareLog = (TextView) findViewById(R.id.tv_share_log);
         shareLog.setOnClickListener(new View.OnClickListener() {
@@ -225,6 +247,48 @@ public class MainActivity extends BaseActivity {
             }
         });
         initLeftMenu();
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if (v.getId() == R.id.scroll_log_action) {
+            menu.add(0, MENU_LOG_COPY_ALL, 0, R.string.action_copy_all);
+        }
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case MENU_LOG_COPY_ALL:
+                copyCurrentLogText();
+                return true;
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    private void copyCurrentLogText() {
+        StringBuilder logText = new StringBuilder();
+        List<String> data = mTermAdapter.getData();
+        for (String line : data) {
+            if (line == null) {
+                continue;
+            }
+            if (logText.length() > 0) {
+                logText.append('\n');
+            }
+            logText.append(line);
+        }
+        if (logText.length() == 0) {
+            Toast.makeText(this, R.string.share_log_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboardManager != null) {
+            clipboardManager.setPrimaryClip(ClipData.newPlainText(getString(R.string.running_log), logText));
+            Toast.makeText(this, R.string.toast_log_copied, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void shareCurrentLog() {

@@ -82,6 +82,8 @@
     <string name="share_log_title">Share hin2n log</string>
     <string name="share_log_empty">No log file to share</string>
     <string name="action_copy">Copy</string>
+    <string name="action_copy_all">Copy all</string>
+    <string name="toast_log_copied">Log copied.</string>
     <string name="action_delete">Delete</string>
     <string name="contact">Contact</string>
     <string name="toast_vpn_parameter_not_accepted">Parameter is not accepted by the operating system.</string>

@@ -1098,6 +1098,9 @@ void readFromIPSocket( n2n_edge_t * eee )
                 {
 		  /* Response to supernode registration. Supernode is not in the pending_peers list. */
 #ifdef __ANDROID_NDK__
+              if (eee->sn_wait) {
+                  traceEvent(TRACE_NORMAL, "[OK] Edge Peer <<< ================ >>> Super Node");
+              }
               eee->sn_wait = 0;
               int change = 0;
               pthread_mutex_lock(&g_status->mutex);

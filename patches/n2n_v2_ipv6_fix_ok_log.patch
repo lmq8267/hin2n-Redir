@@ -1,0 +1,38 @@
+diff --git a/bundles/n2n_v2_ipv6/edge.c b/bundles/n2n_v2_ipv6/edge.c
+index 4e1d0ff..19385eb 100644
+--- a/bundles/n2n_v2_ipv6/edge.c
++++ b/bundles/n2n_v2_ipv6/edge.c
+@@ -2917,8 +2917,6 @@ static void readFromMgmtSocket(n2n_edge_t *eee, int *keep_running) {
+ static void readFromIPSocket( n2n_edge_t * eee, SOCKET fd )
+ {
+     n2n_common_t        cmn; /* common fields in the packet header */
+-    static int          first_ok_message_shown = 0;
+-
+     n2n_sock_str_t      sockbuf1;
+     n2n_sock_str_t      sockbuf2; /* don't clobber sockbuf1 if writing two addresses to trace */
+     macstr_t            mac_buf1;
+@@ -3388,6 +3386,7 @@ static void readFromIPSocket( n2n_edge_t * eee, SOCKET fd )
+                     /* Only do full processing on the first ACK; subsequent ACKs
+                      * (from alt address family) just refresh last_sup silently. */
+                     if ( eee->sn_ack_count == 1 ) {
++                        int first_ok_message = eee->last_sup == 0;
+                         eee->last_sup = now;
+                         eee->sn_wait = 0;
+                         eee->sup_attempts = N2N_EDGE_SUP_ATTEMPTS;
+@@ -3425,7 +3424,7 @@ static void readFromIPSocket( n2n_edge_t * eee, SOCKET fd )
+                                                    (eee->supernode_alt.family == AF_INET6 ? 1 : 0);
+                         }
+ 
+-                        if (first_ok_message_shown == 0) {
++                        if (first_ok_message) {
+                             const char *caps_str;
+                             if (eee->sn_ipv4_support && eee->sn_ipv6_support)
+                                 caps_str = "IPv4+IPv6 (dual-stack)";
+@@ -3438,7 +3437,6 @@ static void readFromIPSocket( n2n_edge_t * eee, SOCKET fd )
+                             traceEvent(TRACE_NORMAL, "Supernode support: %s", caps_str);
+                             traceEvent(TRACE_NORMAL, "[OK] edge <<< ======= %s ======= >>> supernode",
+                                        sender.family == AF_INET6 ? "IPv6" : "IPv4");
+-                            first_ok_message_shown = 1;
+                         } else {
+                             traceEvent(TRACE_DEBUG, "[OK] edge <<< ======= %s ======= >>> supernode",
+                                        eee->supernode.family == AF_INET6 ? "IPv6" : "IPv4");

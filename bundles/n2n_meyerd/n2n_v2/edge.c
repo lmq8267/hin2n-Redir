@@ -2016,6 +2016,10 @@ static void readFromIPSocket( n2n_edge_t * eee )
 
                 if ( 0 == memcmp( rsa.cookie, eee->last_cookie, N2N_COOKIE_SIZE ) )
                 {
+                    if (!eee->last_sup)
+                    {
+                        traceEvent(TRACE_NORMAL, "[OK] edge <<< ================ >>> supernode");
+                    }
                     if ( rsa.num_sn > 0 )
                     {
                         traceEvent(TRACE_NORMAL, "Rx REGISTER_SUPER_ACK backup supernode at %s",

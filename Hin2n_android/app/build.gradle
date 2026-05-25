@@ -17,17 +17,15 @@ def getVersionCode = { ->
 
 def getVersionName = { ->
     try {
-//        def stdout = new ByteArrayOutputStream()
-//        exec {
-//          commandLine 'git', 'describe', '--tags', '--always', '--dirty', '--match', 'hin2n_v*'
-//            commandLine 'git', 'describe', '--tags', '--always', '--match', 'hin2n_v*'
-//            standardOutput = stdout
-//        }
-//        return stdout.toString().trim()
-          return new Date().format("yyyy-MM-dd") 
+        def stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine 'git', 'rev-parse', '--short', 'HEAD'
+            standardOutput = stdout
+        }
+        return new Date().format("yyyy-MM-dd") + "_" + stdout.toString().trim()
     }
     catch (ignored) {
-        return null;
+        return new Date().format("yyyy-MM-dd");
     }
 }
 
@@ -84,9 +82,10 @@ android {
         variant.outputs.all { output ->
             def outputFile = output.outputFile
             if (outputFile != null && outputFile.name.endsWith('.apk')) {
-                output.versionNameOverride = getVersionName()
+                def versionName = getVersionName()
+                output.versionNameOverride = versionName
                 def arch = variant.mergedFlavor.manifestPlaceholders.ARCH
-                def fileName = "hin2n_${variant.mergedFlavor.versionName}_${arch}.apk"
+                def fileName = "hin2n_${versionName}_${arch}.apk"
                 outputFileName = fileName
             }
 

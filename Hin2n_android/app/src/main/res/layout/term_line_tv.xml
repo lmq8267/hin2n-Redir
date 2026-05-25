@@ -3,5 +3,6 @@
     android:id="@+id/term_text"
     android:textSize="10sp"
     android:textColor="@color/c_white"
+    android:textIsSelectable="true"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"/>

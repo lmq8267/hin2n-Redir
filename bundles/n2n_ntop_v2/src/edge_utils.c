@@ -2048,14 +2048,6 @@ static void readFromIPSocket(n2n_edge_t * eee, int in_sock) {
       }
     case MSG_TYPE_REGISTER_SUPER_ACK:
       {
-        // Indicates successful connection between the edge and SN nodes
-        static int bTrace = 1;
-        if (bTrace)
-        {
-          traceEvent(TRACE_NORMAL, "[OK] Edge Peer <<< ================ >>> Super Node");
-          bTrace = 0;
-        }
-
         n2n_REGISTER_SUPER_ACK_t ra;
 
 	  if(eee->sn_wait)
@@ -2085,6 +2077,10 @@ static void readFromIPSocket(n2n_edge_t * eee, int in_sock) {
 
 	      if(0 == memcmp(ra.cookie, eee->last_cookie, N2N_COOKIE_SIZE))
                 {
+		  if(!eee->last_sup)
+                    {
+		      traceEvent(TRACE_NORMAL, "[OK] Edge Peer <<< ================ >>> Super Node");
+                    }
 		  if(ra.num_sn > 0)
                     {
 		      traceEvent(TRACE_NORMAL, "Rx REGISTER_SUPER_ACK backup supernode at %s",
