@@ -53,7 +53,27 @@ jobs:
          export ANDROID_HOME=/opt/gcc/Android/sdk
          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
          rm -rf app/Hin2n.jks
-         keytool -genkeypair -v -keystore app/Hin2n.jks -alias Hin2n -keyalg RSA -keysize 2048 -validity 36135 -storepass My-Hin2n -keypass My-Hin2n -dname "CN=Hin2n, OU=Dev, O=Switchy Inc, L=Beijing, S=Beijing, C=CN"
+         if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ] && [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+           echo "使用仓库密钥签名"
+           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/Hin2n.jks
+           export KEYSTORE_FILE=Hin2n.jks
+           export KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
+           export KEY_ALIAS="${{ secrets.KEY_ALIAS }}"
+           export KEY_PASSWORD="${{ secrets.KEY_PASSWORD }}"
+           if [ -z "$KEY_ALIAS" ]; then
+             export KEY_ALIAS=Hin2n
+           fi
+           if [ -z "$KEY_PASSWORD" ]; then
+             export KEY_PASSWORD="$KEYSTORE_PASSWORD"
+           fi
+         else
+           echo "生成临时密钥签名"
+           export KEYSTORE_FILE=Hin2n.jks
+           export KEYSTORE_PASSWORD=My-Hin2n
+           export KEY_ALIAS=Hin2n
+           export KEY_PASSWORD=My-Hin2n
+           keytool -genkeypair -v -keystore app/Hin2n.jks -alias "$KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 36135 -storepass "$KEYSTORE_PASSWORD" -keypass "$KEY_PASSWORD" -dname "CN=Hin2n, OU=Dev, O=Switchy Inc, L=Beijing, S=Beijing, C=CN"
+         fi
          ./gradlew assembleRelease
          
       - name: 打包hin2n

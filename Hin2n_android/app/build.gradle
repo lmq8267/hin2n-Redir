@@ -54,10 +54,10 @@ android {
         debug {}
 
         release {
-            storeFile file("Hin2n.jks")
-            storePassword "My-Hin2n"
-            keyAlias "Hin2n"
-            keyPassword "My-Hin2n"
+            storeFile file(System.getenv("KEYSTORE_FILE") ?: "Hin2n.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: "My-Hin2n"
+            keyAlias System.getenv("KEY_ALIAS") ?: "Hin2n"
+            keyPassword System.getenv("KEY_PASSWORD") ?: (System.getenv("KEYSTORE_PASSWORD") ?: "My-Hin2n")
         }
     }
 

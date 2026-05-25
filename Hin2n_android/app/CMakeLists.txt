@@ -92,7 +92,7 @@ set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
 set(CURL_DISABLE_PSL ON CACHE BOOL "" FORCE)
 add_subdirectory(src/main/cpp/curl)
 
-add_definitions(-DN2N_VERSION=\"${N2N_VERSION}\" -DN2N_OSNAME=\"${N2N_OSNAME}\" -DN2N_MODIFY_VERSION=\"${N2N_MODIFY_VERSION}\" -DN2N_MODIFY_AUTHOR=\"${N2N_MODIFY_AUTHOR}\" -DUIP_CONF_BYTE_ORDER=\"${UIP_CONF_BYTE_ORDER}\")
+add_definitions(-DN2N_OSNAME=\"${N2N_OSNAME}\" -DN2N_MODIFY_VERSION=\"${N2N_MODIFY_VERSION}\" -DN2N_MODIFY_AUTHOR=\"${N2N_MODIFY_AUTHOR}\" -DUIP_CONF_BYTE_ORDER=\"${UIP_CONF_BYTE_ORDER}\")
 add_definitions(-DGIT_RELEASE="" -DPACKAGE_VERSION="${N2N_VERSION}" -DPACKAGE_OSNAME="${CMAKE_SYSTEM}")
 include_directories(src/main/cpp src/main/cpp/edge_jni src/main/cpp/slog src/main/cpp/tun2tap src/main/cpp/uip)
 
@@ -222,8 +222,8 @@ add_library(edge_v23 SHARED
         src/main/cpp/edge_jni/ifaddrs_android_v23.c
         )
 target_compile_definitions(edge_v23 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
+target_compile_definitions(edge_v23 PRIVATE N2N_VERSION=\"${N2N_V23_VERSION}\")
 set_source_files_properties(src/main/cpp/n2n_v2_ipv6/edge.c PROPERTIES COMPILE_DEFINITIONS "main=edge_v23_main")
-set_source_files_properties(src/main/cpp/n2n_v2_ipv6/version.c PROPERTIES COMPILE_OPTIONS "-UN2N_VERSION;-DN2N_VERSION=\\\"${N2N_V23_VERSION}\\\"")
 set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket -Wl,--wrap=exit -Wl,--wrap=abort -Wl,--wrap=setuid -Wl,--wrap=setgid -Wl,--wrap=setreuid -Wl,--wrap=setregid")
 target_include_directories(edge_v23 PUBLIC
         src/main/cpp/n2n_v2_ipv6
@@ -259,6 +259,7 @@ add_library(n2n_v2s SHARED
                 src/main/cpp/n2n_v2s/android/tuntap_android.c
                 src/main/cpp/n2n_v2s/version.c
             )
+target_compile_definitions(n2n_v2s PRIVATE N2N_VERSION=\"${N2N_VERSION}\")
 target_link_libraries(n2n_v2s uip)
 target_link_libraries(n2n_v2s slog)
 
@@ -269,6 +270,7 @@ add_library(n2n_v1 SHARED
                 src/main/cpp/n2n_v1/android/tuntap_android.c
                 src/main/cpp/n2n_v1/version.c
             )
+target_compile_definitions(n2n_v1 PRIVATE N2N_VERSION=\"${N2N_VERSION}\")
 target_link_libraries(n2n_v1 uip)
 target_link_libraries(n2n_v1 slog)
 
