@@ -490,8 +490,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 break;
             case R.id.rb_v23:
                 mUseHttpTunnelCheckBox.setVisibility(View.GONE);
-                mGetIpFromSupernodeView.setVisibility(View.GONE);
-                mGetIpFromSupernodeCheckBox.setChecked(false);
+                mGetIpFromSupernodeView.setVisibility(View.VISIBLE);
+                boolean bGetIpFromSupernodeCheckedV23 = false;
+                if(mN2NSettingModel != null)
+                    bGetIpFromSupernodeCheckedV23 = mN2NSettingModel.getIpMode() == 1;
+                mGetIpFromSupernodeCheckBox.setChecked(bGetIpFromSupernodeCheckedV23);
                 mDevDescTIL.setVisibility(View.GONE);
                 mSuperNodeBackup.setVisibility(View.VISIBLE);
                 mAcceptMuticastView.setVisibility(View.VISIBLE);
@@ -552,6 +555,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         return mLocalIpCheckBox.isChecked() ? "auto" : mLocalIP.getEditText().getText().toString();
     }
 
+    private String getMacAddrValue() {
+        String mac = mMacAddr.getEditText().getText().toString();
+        if (EdgeCmd.isEmptyOrZeroMac(mac)) {
+            mac = EdgeCmd.getRandomMac();
+            mMacAddr.getEditText().setText(mac);
+        }
+        return mac;
+    }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -573,13 +585,14 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 if (n2NSettingModelDao.queryBuilder().where(N2NSettingModelDao.Properties.IsSelcected.eq(true)).unique() != null) {
                     hasSelected = true;
                 }
+                String macAddr = getMacAddrValue();
 
                 mN2NSettingModel = new N2NSettingModel(null, getN2nVersion(), settingName, mGetIpFromSupernodeCheckBox.isChecked() ? 1 : 0,
                         mIpAddressTIL.getEditText().getText().toString(), mNetMaskTIL.getEditText().getText().toString(),
                         mCommunityTIL.getEditText().getText().toString(), mEncryptTIL.getEditText().getText().toString(),
                         mDevDescTIL.getEditText().getText().toString(),
                         mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
-                        mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
+                        mSuperNodeBackup.getEditText().getText().toString(), macAddr,
                         Integer.valueOf(mMtu.getEditText().getText().toString()), getLocalIpValue(),
                         Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), getN2nVersion() == 4 ? isV23AddressFamilyIpv4() : mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),
@@ -626,13 +639,14 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                     settingName1 = setingNameTmp1 + "(" + i1 + ")";
                     n2NSettingModelTmp = n2NSettingModelDao1.queryBuilder().where(N2NSettingModelDao.Properties.Name.eq(settingName1)).unique();
                 }
+                String macAddr1 = getMacAddrValue();
 
                 mN2NSettingModel = new N2NSettingModel(mSaveId, getN2nVersion(), settingName1, mGetIpFromSupernodeCheckBox.isChecked() ? 1 : 0,
                         mIpAddressTIL.getEditText().getText().toString(), mNetMaskTIL.getEditText().getText().toString(),
                         mCommunityTIL.getEditText().getText().toString(), mEncryptTIL.getEditText().getText().toString(),
                         mDevDescTIL.getEditText().getText().toString(),
                         mSuperNodeTIL.getEditText().getText().toString(), mMoreSettingCheckBox.isChecked(),
-                        mSuperNodeBackup.getEditText().getText().toString(), mMacAddr.getEditText().getText().toString(),
+                        mSuperNodeBackup.getEditText().getText().toString(), macAddr1,
                         Integer.valueOf(mMtu.getEditText().getText().toString()), getLocalIpValue(),
                         Integer.valueOf(mHolePunchInterval.getEditText().getText().toString()), getN2nVersion() == 4 ? isV23AddressFamilyIpv4() : mResoveSupernodeIPCheckBox.isChecked(),
                         Integer.valueOf(mLocalPort.getEditText().getText().toString()), mAllowRoutinCheckBox.isChecked(),

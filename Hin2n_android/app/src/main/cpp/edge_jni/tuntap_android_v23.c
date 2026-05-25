@@ -13,6 +13,9 @@
 #include <tun2tap/tun2tap.h>
 #include <edge_jni/edge_jni.h>
 
+static int placeholder_read_fd = -1;
+static int placeholder_write_fd = -1;
+
 static int clear_nonblock(int fd) {
     int val;
 
@@ -34,7 +37,7 @@ static int clear_nonblock(int fd) {
     return 0;
 }
 
-static int establish_vpn_service(const struct tuntap_config *config) {
+static int establish_vpn_service_ip(uint32_t ip_addr, uint8_t ip_prefixlen) {
     JNIEnv *env = NULL;
     jclass vpn_service_cls;
     jmethodID mid;
@@ -43,7 +46,7 @@ static int establish_vpn_service(const struct tuntap_config *config) {
     int vpn_fd;
     int attached = 0;
 
-    if (!g_status || !g_status->jvm || !g_status->jobj_service || !config) {
+    if (!g_status || !g_status->jvm || !g_status->jobj_service) {
         return -1;
     }
 
@@ -71,7 +74,7 @@ static int establish_vpn_service(const struct tuntap_config *config) {
         return -1;
     }
 
-    if (!inet_ntop(AF_INET, &config->ip_addr, ip_str, sizeof(ip_str))) {
+    if (!inet_ntop(AF_INET, &ip_addr, ip_str, sizeof(ip_str))) {
         strncpy(ip_str, g_status->cmd.ip_addr, sizeof(ip_str) - 1);
         ip_str[sizeof(ip_str) - 1] = '\0';
     }
@@ -85,7 +88,7 @@ static int establish_vpn_service(const struct tuntap_config *config) {
         return -1;
     }
 
-    vpn_fd = (*env)->CallIntMethod(env, g_status->jobj_service, mid, j_ip, (jint)config->ip_prefixlen);
+    vpn_fd = (*env)->CallIntMethod(env, g_status->jobj_service, mid, j_ip, (jint)ip_prefixlen);
     if ((*env)->ExceptionCheck(env)) {
         (*env)->ExceptionClear(env);
         vpn_fd = -1;
@@ -100,12 +103,47 @@ static int establish_vpn_service(const struct tuntap_config *config) {
     return vpn_fd;
 }
 
+static int establish_vpn_service(const struct tuntap_config *config) {
+    if (!config) {
+        return -1;
+    }
+    return establish_vpn_service_ip(config->ip_addr, config->ip_prefixlen);
+}
+
+static int open_placeholder_fd(void) {
+    int fds[2];
+
+    if (placeholder_read_fd >= 0) {
+        return placeholder_read_fd;
+    }
+
+    if (pipe(fds) != 0) {
+        return -1;
+    }
+    placeholder_read_fd = fds[0];
+    placeholder_write_fd = fds[1];
+    return placeholder_read_fd;
+}
+
+static void close_placeholder_fd(void) {
+    if (placeholder_read_fd >= 0) {
+        close(placeholder_read_fd);
+        placeholder_read_fd = -1;
+    }
+    if (placeholder_write_fd >= 0) {
+        close(placeholder_write_fd);
+        placeholder_write_fd = -1;
+    }
+}
+
 int tuntap_open(tuntap_dev *device, struct tuntap_config *config) {
     if (!device || !config || !g_status) {
         return -1;
     }
 
-    if (g_status->cmd.vpn_fd < 0) {
+    if (g_status->cmd.vpn_fd < 0 && g_status->cmd.ip_mode == 1 && config->ip_addr == 0) {
+        g_status->cmd.vpn_fd = open_placeholder_fd();
+    } else if (g_status->cmd.vpn_fd < 0) {
         g_status->cmd.vpn_fd = establish_vpn_service(config);
     }
     if (g_status->cmd.vpn_fd < 0 || clear_nonblock(g_status->cmd.vpn_fd) < 0) {
@@ -166,16 +204,50 @@ ssize_t tuntap_write(struct tuntap_dev *tuntap, unsigned char *buf, size_t len) 
 }
 
 void tuntap_close(struct tuntap_dev *tuntap) {
-    if (tuntap && tuntap->fd > 0) {
-        close(tuntap->fd);
+    if (tuntap && tuntap->fd >= 0) {
+        if (tuntap->fd == placeholder_read_fd) {
+            close_placeholder_fd();
+        } else {
+            close(tuntap->fd);
+        }
         tuntap->fd = -1;
     }
+    close_placeholder_fd();
 }
 
 void tuntap_get_address(struct tuntap_dev *tuntap) {
 }
 
 int set_ipaddress(const tuntap_dev *device, int static_address) {
+    tuntap_dev *mutable_device = (tuntap_dev *)device;
+    int vpn_fd;
+
+    (void)static_address;
+
+    if (!mutable_device || !g_status) {
+        return -1;
+    }
+
+    if (g_status->cmd.ip_mode != 1) {
+        return 0;
+    }
+
+    vpn_fd = establish_vpn_service_ip(mutable_device->ip_addr, mutable_device->ip_prefixlen);
+    if (vpn_fd < 0 || clear_nonblock(vpn_fd) < 0) {
+        if (vpn_fd >= 0) {
+            close(vpn_fd);
+        }
+        return -1;
+    }
+
+    if (mutable_device->fd == placeholder_read_fd) {
+        close_placeholder_fd();
+    } else if (mutable_device->fd >= 0) {
+        close(mutable_device->fd);
+    }
+    close_placeholder_fd();
+    mutable_device->fd = vpn_fd;
+    g_status->cmd.vpn_fd = vpn_fd;
     return 0;
 }
 

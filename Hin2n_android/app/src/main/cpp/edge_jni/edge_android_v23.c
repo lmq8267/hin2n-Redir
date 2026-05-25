@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <edge_jni/edge_jni.h>
 #include <fcntl.h>
+#include <setjmp.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,10 +20,55 @@
 
 extern int edge_v23_main(int argc, char *argv[]);
 extern int __real_socket(int domain, int type, int protocol);
+extern void __real_exit(int status);
+extern void __real_abort(void);
 
 n2n_edge_status_t *g_status;
 
 static int protect_socket_v23(int fd);
+static jmp_buf exit_jmp;
+static volatile int exit_trap_enabled = 0;
+static volatile int exit_trap_status = 1;
+
+void __wrap_exit(int status) {
+    if (exit_trap_enabled) {
+        exit_trap_status = status == 0 ? 1 : status;
+        __android_log_print(ANDROID_LOG_ERROR, "edge_v23", "Intercepted exit(%d)", status);
+        longjmp(exit_jmp, 1);
+    }
+    __real_exit(status);
+}
+
+void __wrap_abort(void) {
+    if (exit_trap_enabled) {
+        exit_trap_status = 134;
+        __android_log_write(ANDROID_LOG_ERROR, "edge_v23", "Intercepted abort()");
+        longjmp(exit_jmp, 1);
+    }
+    __real_abort();
+}
+
+int __wrap_setuid(uid_t uid) {
+    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setuid(%u) on Android", (unsigned int)uid);
+    return 0;
+}
+
+int __wrap_setgid(gid_t gid) {
+    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setgid(%u) on Android", (unsigned int)gid);
+    return 0;
+}
+
+int __wrap_setreuid(uid_t ruid, uid_t euid) {
+    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setreuid(%u, %u) on Android",
+                        (unsigned int)ruid, (unsigned int)euid);
+    return 0;
+}
+
+int __wrap_setregid(gid_t rgid, gid_t egid) {
+    __android_log_print(ANDROID_LOG_WARN, "edge_v23", "Skipped setregid(%u, %u) on Android",
+                        (unsigned int)rgid, (unsigned int)egid);
+    return 0;
+}
 
 int __wrap_socket(int domain, int type, int protocol) {
     int fd = __real_socket(domain, type, protocol);
@@ -133,8 +179,10 @@ int start_edge_v23(n2n_edge_status_t *status) {
     argv[argc++] = "-f";
     argv[argc++] = "-d";
     argv[argc++] = "edge_v23";
-    argv[argc++] = "-a";
-    argv[argc++] = ip_arg;
+    if (cmd->ip_mode == 0) {
+        argv[argc++] = "-a";
+        argv[argc++] = ip_arg;
+    }
     if (cmd->local_ip[0] != '\0') {
         argv[argc++] = "-A";
         argv[argc++] = cmd->local_ip;
@@ -187,7 +235,15 @@ int start_edge_v23(n2n_edge_status_t *status) {
 
     optind = 1;
     optarg = NULL;
-    int ret = edge_v23_main(argc, argv);
+    int ret;
+    exit_trap_status = 1;
+    exit_trap_enabled = 1;
+    if (setjmp(exit_jmp) == 0) {
+        ret = edge_v23_main(argc, argv);
+    } else {
+        ret = exit_trap_status;
+    }
+    exit_trap_enabled = 0;
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = ret ? EDGE_STAT_FAILED : EDGE_STAT_DISCONNECT;
     pthread_mutex_unlock(&g_status->mutex);

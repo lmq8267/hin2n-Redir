@@ -24,12 +24,14 @@ import java.net.InetAddress;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import wang.switchy.hin2n.Hin2nApplication;
 import wang.switchy.hin2n.R;
 import wang.switchy.hin2n.activity.MainActivity;
 import wang.switchy.hin2n.event.*;
 import wang.switchy.hin2n.model.EdgeCmd;
 import wang.switchy.hin2n.model.EdgeStatus;
 import wang.switchy.hin2n.model.N2NSettingInfo;
+import wang.switchy.hin2n.storage.db.base.model.N2NSettingModel;
 import wang.switchy.hin2n.tool.IOUtils;
 import wang.switchy.hin2n.tool.LogFileObserver;
 import wang.switchy.hin2n.tool.ThreadUtils;
@@ -73,7 +75,7 @@ public class N2NService extends VpnService {
         Builder builder = new Builder()
                 .setMtu(mN2nSettingInfo.getMtu())
                 .addAddress(ip, mask)
-                .addRoute(getRoute(mN2nSettingInfo.getIp(), mask), mask);
+                .addRoute(getRoute(ip, mask), mask);
 
         String localIP = mN2nSettingInfo.getLocalIP();
         if (mN2nSettingInfo.getVersion() == 4 && localIP != null && !localIP.isEmpty()) {
@@ -119,6 +121,26 @@ public class N2NService extends VpnService {
         return mParcelFileDescriptor.detachFd();
     }
 
+    private void ensureMacAddr() {
+        if (mN2nSettingInfo == null || !EdgeCmd.isEmptyOrZeroMac(mN2nSettingInfo.getMacAddr())) {
+            return;
+        }
+
+        String macAddr = EdgeCmd.getRandomMac();
+        mN2nSettingInfo.setMacAddr(macAddr);
+        if (mN2nSettingInfo.getId() == null) {
+            return;
+        }
+
+        N2NSettingModel model = Hin2nApplication.getInstance().getDaoSession()
+                .getN2NSettingModelDao()
+                .load(mN2nSettingInfo.getId());
+        if (model != null) {
+            model.setMacAddr(macAddr);
+            Hin2nApplication.getInstance().getDaoSession().getN2NSettingModelDao().update(model);
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) {
@@ -128,6 +150,7 @@ public class N2NService extends VpnService {
 
         Bundle setting = intent.getBundleExtra("Setting");
         mN2nSettingInfo = setting.getParcelable("n2nSettingInfo");
+        ensureMacAddr();
 
         int vpnServiceFd = -1;
         if (mN2nSettingInfo.getIpMode() == 0 && mN2nSettingInfo.getVersion() != 4) {
@@ -142,6 +165,7 @@ public class N2NService extends VpnService {
         mFileObserver = new LogFileObserver(cmd.logPath);
         mFileObserver.stopWatching();
         IOUtils.clearLogTxt(cmd.logPath);
+        EventBus.getDefault().post(new LogChangeEvent(cmd.logPath));
         mFileObserver.startWatching();
         try {
             if (!startEdge(cmd)) {

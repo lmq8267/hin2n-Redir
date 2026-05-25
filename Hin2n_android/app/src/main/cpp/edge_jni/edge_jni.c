@@ -452,8 +452,8 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "encryptionMode = %s", cmd->encryption_mode);
 #endif /* #ifndef NDEBUG */
     }
-    // httpTunnel
-    if (status.edge_type == EDGE_TYPE_V1) {
+    // httpTunnel; v23 reuses this field to store "force IPv6 supernode DNS".
+    if (status.edge_type == EDGE_TYPE_V1 || status.edge_type == EDGE_TYPE_V23) {
         jboolean jbHttpTunnel = (*env)->GetBooleanField(env, jcmd,
                                                         (*env)->GetFieldID(env, cls, "httpTunnel",
                                                                            "Z"));

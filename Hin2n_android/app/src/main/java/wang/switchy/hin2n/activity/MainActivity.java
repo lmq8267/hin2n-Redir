@@ -71,6 +71,7 @@ public class MainActivity extends BaseActivity {
     private CheckBox mStartAtBoot;
     private RecyclerView mRecyclerView;
     private TermAdapter mTermAdapter;
+    private boolean mPendingLogStart = false;
     List<String> term = new ArrayList<>();
 
     private static final int REQUECT_CODE_SDCARD = 1;
@@ -246,6 +247,27 @@ public class MainActivity extends BaseActivity {
         startActivity(Intent.createChooser(intent, getString(R.string.share_log_title)));
     }
 
+    private String getLogPathForSetting(N2NSettingInfo settingInfo) {
+        String session = getResources().getStringArray(R.array.vpn_session_name)[settingInfo.getVersion()];
+        return getExternalFilesDir("log") + "/" + session + ".log";
+    }
+
+    private void switchCurrentLog(String newLogPath) {
+        if (TextUtils.isEmpty(newLogPath)) {
+            return;
+        }
+
+        showLog(false);
+        logTxtPath = newLogPath;
+        getSharedPreferences("Hin2n", MODE_PRIVATE)
+                .edit()
+                .putString("current_log_path", logTxtPath)
+                .apply();
+        mTermAdapter.getData().clear();
+        mTermAdapter.notifyDataSetChanged();
+        mPendingLogStart = true;
+    }
+
     private void initLeftMenu() {
         TextView appVersion = (TextView) findViewById(R.id.tv_app_version);
         appVersion.setText(N2nTools.getVersionName(this));
@@ -343,6 +365,7 @@ public class MainActivity extends BaseActivity {
             bundle.putParcelable("n2nSettingInfo", n2NSettingInfo);
             intent.putExtra("Setting", bundle);
 
+            switchCurrentLog(getLogPathForSetting(n2NSettingInfo));
             startService(intent);
         }
         else if (requestCode == REQUEST_CODE_VPN_FOR_START_AT_BOOT) {
@@ -475,7 +498,13 @@ public class MainActivity extends BaseActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onLogChangeEvent(final LogChangeEvent event) {
-        logTxtPath = event.getTxtPath();
+        if (!TextUtils.equals(logTxtPath, event.getTxtPath())) {
+            switchCurrentLog(event.getTxtPath());
+        }
+        if (mPendingLogStart) {
+            mPendingLogStart = false;
+            showLog(true);
+        }
 //        showLog(true);
     }
 

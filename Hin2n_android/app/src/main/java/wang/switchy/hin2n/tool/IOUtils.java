@@ -66,60 +66,71 @@ public class IOUtils {
 
     private volatile static RandomAccessFile randomAccessFile = null;
     private volatile static boolean isNeedShow = false;
+    private volatile static int readGeneration = 0;
     //isNeedShow = true 当第一个线程在运行while时，之后的线程进来只会重置线程共享的RandomAccessFile状态;
     //isNeedShow = false 第一个线程结束while,之后的线程不走while。关闭RandomAccessFile
     public static void readTxtLimits(boolean showLog, String txtPath, int size, BaseQuickAdapter mAdapter) {
 //        Log.d("readTxtLimits", Thread.currentThread() + "");
+        if (!showLog) {
+            isNeedShow = false;
+            readGeneration++;
+            close(randomAccessFile);
+            randomAccessFile = null;
+            return;
+        }
+
         isNeedShow = showLog;
+        int generation = ++readGeneration;
+        close(randomAccessFile);
+        randomAccessFile = null;
+        RandomAccessFile reader = null;
         try {
             File file = new File(txtPath);
             if (file.exists() && file.isFile()) {
-                if (randomAccessFile == null) {
-                    randomAccessFile = new RandomAccessFile(file, "r");
-                    long length = randomAccessFile.length();
-                    long start = 0;
-                    if (length > size) {
-                        start = length - size;
-                    }
-                    randomAccessFile.seek(start);
-                    String text = null;
-                    while (isNeedShow) {
+                reader = new RandomAccessFile(file, "r");
+                randomAccessFile = reader;
+                long length = reader.length();
+                long start = 0;
+                if (length > size) {
+                    start = length - size;
+                }
+                reader.seek(start);
+                String text = null;
+                while (isNeedShow && generation == readGeneration) {
 //                        Log.d("readTxtLimits-1", Thread.currentThread() + "");
-                        text = randomAccessFile.readLine();
-                        if (!TextUtils.isEmpty(text)) {
-                            String finalText = text;
-                            ThreadUtils.mainThreadExecutor(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (mAdapter.getData().size() > 200) {
-                                        mAdapter.getData().remove(0);
-                                        mAdapter.notifyItemRemoved(0);
-                                    }
-                                    mAdapter.getData().add(finalText);
-                                    int last = mAdapter.getData().size() - 1;
-                                    mAdapter.notifyItemChanged(last);
-                                    mAdapter.getRecyclerView().scrollToPosition(last);
+                    text = reader.readLine();
+                    if (!TextUtils.isEmpty(text)) {
+                        String finalText = text;
+                        ThreadUtils.mainThreadExecutor(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mAdapter.getData().size() > 200) {
+                                    mAdapter.getData().remove(0);
+                                    mAdapter.notifyItemRemoved(0);
                                 }
-                            });
+                                mAdapter.getData().add(finalText);
+                                int last = mAdapter.getData().size() - 1;
+                                mAdapter.notifyItemChanged(last);
+                                mAdapter.getRecyclerView().scrollToPosition(last);
+                            }
+                        });
+                    } else {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            break;
                         }
                     }
-                } else if (isNeedShow) {
-                    randomAccessFile = new RandomAccessFile(file, "r");
-                    long length = randomAccessFile.length();
-                    long start = 0;
-                    if (length > size) {
-                        start = length - size;
-                    }
-                    randomAccessFile.seek(start);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (!isNeedShow) {
-                close(randomAccessFile);
+            if (randomAccessFile == reader) {
                 randomAccessFile = null;
             }
+            close(reader);
         }
     }
 

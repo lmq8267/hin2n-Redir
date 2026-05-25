@@ -3,6 +3,7 @@ package wang.switchy.hin2n.tool;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.VpnService;
 import android.util.TypedValue;
@@ -54,7 +55,11 @@ public class N2nTools {
 
     public static String getMetaData(Context context, String key) {
         try {
-            return context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA).metaData.getString(key, "");
+            ApplicationInfo info = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            if (info.metaData == null) {
+                return "";
+            }
+            return info.metaData.getString(key, "");
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -309,6 +309,14 @@ public class EdgeCmd {
         }
     }
 
+    public static boolean isEmptyOrZeroMac(String mac) {
+        if (mac == null) {
+            return true;
+        }
+        String value = mac.trim().toLowerCase();
+        return value.isEmpty() || "00:00:00:00:00:00".equals(value);
+    }
+
     public static boolean checkMtu(int mtu) {
         return checkInt(mtu, 46, 1500);
     }

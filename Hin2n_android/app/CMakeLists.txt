@@ -232,7 +232,7 @@ add_library(edge_v23 SHARED
         )
 target_compile_definitions(edge_v23 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
 set_source_files_properties(src/main/cpp/n2n_v2_ipv6/edge.c PROPERTIES COMPILE_DEFINITIONS "main=edge_v23_main")
-set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket")
+set_target_properties(edge_v23 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket -Wl,--wrap=exit -Wl,--wrap=abort -Wl,--wrap=setuid -Wl,--wrap=setgid -Wl,--wrap=setreuid -Wl,--wrap=setregid")
 target_include_directories(edge_v23 PUBLIC
         src/main/cpp/n2n_v2_ipv6
         src/main/cpp/tun2tap

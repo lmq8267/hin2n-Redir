@@ -62,4 +62,3 @@ jobs:
         with:
          name: n2n
          path: /opt/hin2n
-
