@@ -140,7 +140,8 @@ public class EdgeCmd {
         if (!checkInt(vpnFd, 0, 65535)) {
             invalids.add("traceLevel");
         }
-        if (!gatewayIp.isEmpty() && !checkIPV4(gatewayIp)) {
+        if (!gatewayIp.isEmpty()
+                && !((edgeType == 4 && checkIP(gatewayIp)) || (edgeType != 4 && checkIPV4(gatewayIp)))) {
             invalids.add("gatewayIp");
         }
         if (!dnsServer.isEmpty() && !checkIPV4(dnsServer)) {
@@ -170,6 +171,22 @@ public class EdgeCmd {
         }
 
         return true;
+    }
+
+    public static boolean checkIP(String ip) {
+        return checkIPV4(ip) || checkIPV6(ip);
+    }
+
+    public static boolean checkIPV6(String ip) {
+        if (ip == null || ip.isEmpty() || ip.indexOf('/') >= 0) {
+            return false;
+        }
+        try {
+            InetAddress addr = InetAddress.getByName(ip);
+            return addr.getAddress().length == 16;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static boolean checkIPV4Mask(String netmask) {

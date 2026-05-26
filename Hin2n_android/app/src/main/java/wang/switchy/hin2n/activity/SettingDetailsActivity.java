@@ -816,7 +816,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mNetMaskTIL.setErrorEnabled(false);
         }
         if((!mGatewayIp.getEditText().getText().toString().isEmpty()) &&
-            (!EdgeCmd.checkIPV4(mGatewayIp.getEditText().getText().toString()))) {
+                (!((ver == 4 && EdgeCmd.checkIP(mGatewayIp.getEditText().getText().toString())) ||
+                        (ver != 4 && EdgeCmd.checkIPV4(mGatewayIp.getEditText().getText().toString()))))) {
           setFormatError(mGatewayIp);
           mGatewayIp.getEditText().requestFocus();
           return false;

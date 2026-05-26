@@ -37,6 +37,7 @@ static void configure_arp(const tuntap_dev *device) {
     uint32_t mask_host;
     uip_ipaddr_t ipaddr;
     struct uip_eth_addr eaddr;
+    struct in_addr gateway;
 
     if (!device || device->ip_addr == 0) {
         return;
@@ -58,6 +59,16 @@ static void configure_arp(const tuntap_dev *device) {
                (mask_host >> 8) & 0xff,
                mask_host & 0xff);
     uip_setnetmask(ipaddr);
+
+    if (g_status && inet_pton(AF_INET, g_status->cmd.gateway_ip, &gateway) == 1) {
+        ip_host = ntohl(gateway.s_addr);
+        uip_ipaddr(ipaddr,
+                   (ip_host >> 24) & 0xff,
+                   (ip_host >> 16) & 0xff,
+                   (ip_host >> 8) & 0xff,
+                   ip_host & 0xff);
+        uip_setdraddr(ipaddr);
+    }
 
     memcpy(eaddr.addr, device->mac_addr, sizeof(eaddr.addr));
     uip_setethaddr(eaddr);
@@ -292,6 +303,10 @@ ssize_t tuntap_write(struct tuntap_dev *tuntap, unsigned char *buf, size_t len) 
 
     uip_buf = buf;
     uip_len = len;
+    if (IPBUF->ethhdr.type == htons(UIP_ETHTYPE_ARP)) {
+        uip_arp_arpin();
+        return (ssize_t)len;
+    }
     if (IPBUF->ethhdr.type != htons(UIP_ETHTYPE_IP) &&
         IPBUF->ethhdr.type != htons(UIP_ETHTYPE_IP6)) {
         return 0;

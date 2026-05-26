@@ -93,11 +93,15 @@ public class N2NService extends VpnService {
             addV2_IPV6Ipv6Address(builder, ip6, ip6PrefixLength);
         }
 
-        if (!mN2nSettingInfo.getGatewayIp().isEmpty()) {
+        if (!mN2nSettingInfo.getGatewayIp().isEmpty() && shouldRouteIpv4Gateway()) {
             /* Route all the internet traffic via n2n. Most specific routes "win" over the system default gateway.
              * See https://github.com/zerotier/ZeroTierOne/issues/178#issuecomment-204599227 */
             builder.addRoute("0.0.0.0", 1);
             builder.addRoute("128.0.0.0", 1);
+        }
+        if (!mN2nSettingInfo.getGatewayIp().isEmpty() && shouldRouteIpv6Gateway()) {
+            builder.addRoute("::", 1);
+            builder.addRoute("8000::", 1);
         }
 
         if (!mN2nSettingInfo.getDnsServer().isEmpty()) {
@@ -154,6 +158,14 @@ public class N2NService extends VpnService {
         } catch (Exception e) {
             Log.e("N2NService", "Invalid v2-ipv6 IPv6 address: " + address + "/" + prefixLength, e);
         }
+    }
+
+    private boolean shouldRouteIpv4Gateway() {
+        return mN2nSettingInfo.getVersion() != 4 || EdgeCmd.checkIPV4(mN2nSettingInfo.getGatewayIp());
+    }
+
+    private boolean shouldRouteIpv6Gateway() {
+        return mN2nSettingInfo.getVersion() == 4 && EdgeCmd.checkIPV6(mN2nSettingInfo.getGatewayIp());
     }
 
     private InetAddress getNetworkAddress(InetAddress address, int prefixLength) throws Exception {

@@ -30,6 +30,7 @@ static volatile int stop_requested = 0;
 static int protect_socket_v2_ipv6(int fd);
 static void log_edge_v2_ipv6_command_line(int argc, char *argv[]);
 static int android_stop_requested(const char *stage);
+static int gateway_address_family(const char *gateway);
 static jmp_buf exit_jmp;
 static volatile int exit_trap_enabled = 0;
 static volatile int exit_trap_status = 1;
@@ -145,6 +146,22 @@ static int prefix_from_netmask(const char *netmask) {
     return prefix;
 }
 
+static int gateway_address_family(const char *gateway) {
+    struct in_addr addr4;
+    struct in6_addr addr6;
+
+    if (!gateway || gateway[0] == '\0') {
+        return AF_UNSPEC;
+    }
+    if (inet_pton(AF_INET, gateway, &addr4) == 1) {
+        return AF_INET;
+    }
+    if (inet_pton(AF_INET6, gateway, &addr6) == 1) {
+        return AF_INET6;
+    }
+    return AF_UNSPEC;
+}
+
 static void log_edge_v2_ipv6_command_line(int argc, char *argv[]) {
     char line[1024];
     size_t used = 0;
@@ -176,10 +193,12 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     char ip_arg[64];
     char mtu_arg[16];
     char local_port_arg[16];
+    char route_arg[2][96];
     char trace_args[4][3] = {{0}};
     char *argv[48];
     int argc = 0;
     int i;
+    int gateway_family;
     n2n_edge_cmd_t *cmd;
     FILE *log_file;
 
@@ -251,6 +270,22 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     if (cmd->local_port > 0) {
         argv[argc++] = "-p";
         argv[argc++] = local_port_arg;
+    }
+    gateway_family = gateway_address_family(cmd->gateway_ip);
+    if (gateway_family == AF_INET) {
+        snprintf(route_arg[0], sizeof(route_arg[0]), "0.0.0.0/1,%s", cmd->gateway_ip);
+        snprintf(route_arg[1], sizeof(route_arg[1]), "128.0.0.0/1,%s", cmd->gateway_ip);
+        argv[argc++] = "-R";
+        argv[argc++] = route_arg[0];
+        argv[argc++] = "-R";
+        argv[argc++] = route_arg[1];
+    } else if (gateway_family == AF_INET6) {
+        snprintf(route_arg[0], sizeof(route_arg[0]), "::/1,%s", cmd->gateway_ip);
+        snprintf(route_arg[1], sizeof(route_arg[1]), "8000::/1,%s", cmd->gateway_ip);
+        argv[argc++] = "-R";
+        argv[argc++] = route_arg[0];
+        argv[argc++] = "-R";
+        argv[argc++] = route_arg[1];
     }
     if (cmd->allow_routing) {
         argv[argc++] = "-r";
