@@ -1465,6 +1465,17 @@ static void supernode2addr(n2n_edge_t * eee, char* addr) {
 extern int useSyslog;
 #ifdef __ANDROID_NDK__
 static int keep_running = 1;
+static volatile int stop_requested = 0;
+
+static int android_stop_requested(const char *stage) {
+    if (!stop_requested) {
+        return 0;
+    }
+    traceEvent(TRACE_NORMAL, "Stop requested while connecting%s%s.",
+               stage ? " at " : "",
+               stage ? stage : "");
+    return 1;
+}
 #endif /* #ifdef __ANDROID_NDK__ */
 
 #define N2N_NETMASK_STR_SIZE 16 /* dotted decimal 12 numbers + 3 dots */
@@ -1710,6 +1721,7 @@ int start_edge_v1(n2n_edge_status_t* status) {
     unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
 
     keep_running = 0;
+    stop_requested = 0;
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_CONNECTING;
     pthread_mutex_unlock(&g_status->mutex);
@@ -1733,6 +1745,10 @@ int start_edge_v1(n2n_edge_status_t* status) {
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("edge_init")) {
+        edge_deinit(&eee);
+        return 0;
     }
     memset(&(eee.supernode), 0, sizeof(eee.supernode));
     eee.supernode.family = AF_INET;
@@ -1815,6 +1831,11 @@ int start_edge_v1(n2n_edge_status_t* status) {
     eee.sinfo.is_udp_socket = cmd->http_tunnel == 0 ? 1 : 0;
 
     supernode2addr(&eee, eee.supernode_ip);
+    if (android_stop_requested("supernode resolve")) {
+        free(encrypt_key);
+        edge_deinit(&eee);
+        return 0;
+    }
     if (!eee.supernode.addr_type.v4_addr)
     {
         traceEvent(TRACE_ERROR, "Supernode is not resolved.");
@@ -1834,6 +1855,11 @@ int start_edge_v1(n2n_edge_status_t* status) {
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("tuntap_open")) {
+        free(encrypt_key);
+        edge_deinit(&eee);
+        return 0;
     }
     if(local_port > 0)
     {
@@ -1872,6 +1898,10 @@ int start_edge_v1(n2n_edge_status_t* status) {
             }
             return 1;
         }
+        if (android_stop_requested("supernode socket connect")) {
+            edge_deinit(&eee);
+            return 0;
+        }
     }
     mgmt_sock = open_socket(N2N_EDGE_MGMT_PORT, 1, 0);
     if (mgmt_sock < 0)
@@ -1882,6 +1912,11 @@ int start_edge_v1(n2n_edge_status_t* status) {
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("management socket")) {
+        closesocket(mgmt_sock);
+        edge_deinit(&eee);
+        return 0;
     }
 
     /* set host addr, netmask, mac addr for UIP and init arp*/
@@ -2064,7 +2099,9 @@ int start_edge_v1(n2n_edge_status_t* status) {
 #ifdef __ANDROID_NDK__
 int stop_edge_v1(void)
 {
+    stop_requested = 1;
     keep_running = 0;
+    traceEvent(TRACE_NORMAL, "Stop requested.");
 
     // quick stop
     int fd = open_socket(0, 1, 0);

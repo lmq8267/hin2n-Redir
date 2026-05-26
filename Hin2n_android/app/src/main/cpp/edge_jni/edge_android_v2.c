@@ -29,6 +29,17 @@
 
 /* Shared status. Must call pthread_mutex_lock before use. */
 n2n_edge_status_t *g_status;
+static volatile int stop_requested = 0;
+
+static int android_stop_requested(const char *stage) {
+    if (!stop_requested) {
+        return 0;
+    }
+    traceEvent(TRACE_NORMAL, "Stop requested while connecting%s%s.",
+               stage ? " at " : "",
+               stage ? stage : "");
+    return 1;
+}
 
 #ifndef N2N_V3
 static n2n_mac_t broadcast_mac = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
@@ -404,6 +415,7 @@ int start_edge_v2(n2n_edge_status_t *status) {
         traceEvent(TRACE_ERROR, "Empty cmd struct");
         return 1;
     }
+    stop_requested = 0;
     g_status = status;
     n2n_edge_cmd_t *cmd = &status->cmd;
     unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
@@ -428,6 +440,10 @@ int start_edge_v2(n2n_edge_status_t *status) {
 
     memset(&dev, 0, sizeof(dev));
     edge_init_conf_defaults(&conf);
+    if (android_stop_requested("edge_init_conf_defaults")) {
+        rv = 0;
+        goto cleanup;
+    }
 
     /* Load the configuration */
     strncpy((char *) conf.community_name, cmd->community, N2N_COMMUNITY_SIZE - 1);
@@ -494,11 +510,19 @@ int start_edge_v2(n2n_edge_status_t *status) {
         rv = 1;
         goto cleanup;
     }
+    if (android_stop_requested("edge_verify_conf")) {
+        rv = 0;
+        goto cleanup;
+    }
 
     /* Open the TAP device */
     if (tuntap_open(&dev, tuntap_dev_name, ip_mode, ip_addr, netmask, device_mac, mtu) < 0) {
         traceEvent(TRACE_ERROR, "Failed in tuntap_open");
         rv = 1;
+        goto cleanup;
+    }
+    if (android_stop_requested("tuntap_open")) {
+        rv = 0;
         goto cleanup;
     }
 
@@ -508,6 +532,10 @@ int start_edge_v2(n2n_edge_status_t *status) {
     if (eee == NULL) {
         traceEvent(TRACE_ERROR, "Failed in edge_init");
         rv = 1;
+        goto cleanup;
+    }
+    if (android_stop_requested("edge_init")) {
+        rv = 0;
         goto cleanup;
     }
 
@@ -594,6 +622,9 @@ int start_edge_v2(n2n_edge_status_t *status) {
 /* *************************************************** */
 
 int stop_edge_v2(void) {
+    stop_requested = 1;
+    traceEvent(TRACE_NORMAL, "Stop requested.");
+
     // quick stop
     int fd = open_socket(0, 0 /* bind LOOPBACK*/ );
     if (fd < 0) {
@@ -645,6 +676,7 @@ int start_edge_v3(n2n_edge_status_t *status) {
         return 1;
     }
 
+    stop_requested = 0;
     g_stop_initial = 0;
     g_status = status;
     n2n_edge_cmd_t *cmd = &status->cmd;
@@ -665,6 +697,10 @@ int start_edge_v3(n2n_edge_status_t *status) {
 
     memset(&dev, 0, sizeof(dev));
     edge_init_conf_defaults(&conf);
+    if (android_stop_requested("edge_init_conf_defaults")) {
+        rv = 0;
+        goto cleanup;
+    }
 
     /* Load the configuration */
     strncpy((char *) conf.community_name, cmd->community, N2N_COMMUNITY_SIZE - 1);
@@ -742,6 +778,10 @@ int start_edge_v3(n2n_edge_status_t *status) {
         rv = 1;
         goto cleanup;
     }
+    if (android_stop_requested("edge_verify_conf")) {
+        rv = 0;
+        goto cleanup;
+    }
 
     /* Start n2n */
     eee = edge_init(&conf, &i);
@@ -749,6 +789,10 @@ int start_edge_v3(n2n_edge_status_t *status) {
     if (eee == NULL) {
         traceEvent(TRACE_ERROR, "Failed in edge_init");
         rv = 1;
+        goto cleanup;
+    }
+    if (android_stop_requested("edge_init")) {
+        rv = 0;
         goto cleanup;
     }
 
@@ -859,7 +903,12 @@ int start_edge_v3(n2n_edge_status_t *status) {
 
     while(runlevel < 5) {
         if(g_stop_initial) {
-            rv = 1;
+            stop_requested = 1;
+            rv = 0;
+            goto cleanup;
+        }
+        if(android_stop_requested("bootstrap")) {
+            rv = 0;
             goto cleanup;
         }
 
@@ -1097,6 +1146,9 @@ cleanup:
 }
 
 int stop_edge_v3(void) {
+    stop_requested = 1;
+    traceEvent(TRACE_NORMAL, "Stop requested.");
+
     // quick stop
     g_stop_initial = 1;
 

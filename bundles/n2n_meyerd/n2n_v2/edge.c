@@ -522,6 +522,20 @@ static void readFromIPSocket( n2n_edge_t * eee );
 
 static void readFromMgmtSocket( n2n_edge_t * eee, int * keep_running );
 
+#ifdef __ANDROID_NDK__
+static volatile int stop_requested = 0;
+
+static int android_stop_requested(const char *stage) {
+    if (!stop_requested) {
+        return 0;
+    }
+    traceEvent(TRACE_NORMAL, "Stop requested while connecting%s%s.",
+               stage ? " at " : "",
+               stage ? stage : "");
+    return 1;
+}
+#endif /* __ANDROID_NDK__ */
+
 static void help() {
   print_n2n_version(0 /* no trace */);
 
@@ -3214,6 +3228,7 @@ int start_edge_v2s(n2n_edge_status_t* status)
     unsigned int mtu = cmd->mtu ? cmd->mtu : DEFAULT_MTU;
 
     keep_running = 0;
+    stop_requested = 0;
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_CONNECTING;
     pthread_mutex_unlock(&g_status->mutex);
@@ -3236,6 +3251,10 @@ int start_edge_v2s(n2n_edge_status_t* status)
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("edge_init")) {
+        edge_deinit(&eee);
+        return 0;
     }
     memset(&(eee.supernode), 0, sizeof(eee.supernode));
     eee.supernode.family = AF_INET;
@@ -3337,6 +3356,11 @@ int start_edge_v2s(n2n_edge_status_t* status)
         traceEvent(TRACE_NORMAL, "supernode %u => %s\n", i, (eee.sn_ip_array[i]));
     }
     supernode2addr(&(eee.supernode), eee.sn_ip_array[eee.sn_idx]);
+    if (android_stop_requested("supernode resolve")) {
+        free(encrypt_key);
+        edge_deinit(&eee);
+        return 0;
+    }
     if (encrypt_key == NULL && strlen(eee.keyschedule) == 0)
     {
         traceEvent(TRACE_WARNING, "Encryption is disabled in edge.");
@@ -3360,6 +3384,11 @@ int start_edge_v2s(n2n_edge_status_t* status)
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("tuntap_open")) {
+        free(encrypt_key);
+        edge_deinit(&eee);
+        return 0;
     }
     if(local_port > 0)
     {
@@ -3404,6 +3433,10 @@ int start_edge_v2s(n2n_edge_status_t* status)
         }
         return 1;
     }
+    if (android_stop_requested("main socket")) {
+        edge_deinit(&eee);
+        return 0;
+    }
     if(eee.local_sock_ena)
     {
         if (set_localip(&eee) != 0)
@@ -3425,6 +3458,10 @@ int start_edge_v2s(n2n_edge_status_t* status)
             slog = NULL;
         }
         return 1;
+    }
+    if (android_stop_requested("management socket")) {
+        edge_deinit(&eee);
+        return 0;
     }
 
     /* set host addr, netmask, mac addr for UIP and init arp*/
@@ -3478,13 +3515,17 @@ int start_edge_v2s(n2n_edge_status_t* status)
 
 int stop_edge_v2s(void)
 {
+    stop_requested = 1;
     keep_running = 0;
+    traceEvent(TRACE_NORMAL, "Stop requested.");
 
     struct sockaddr_in peer_addr;
     peer_addr.sin_family = PF_INET;
     peer_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     peer_addr.sin_port = htons(N2N_EDGE_MGMT_PORT);
-    sendto(eee.udp_mgmt_sock, "stop", 4, 0, (struct sockaddr *)&peer_addr, sizeof(struct sockaddr_in));
+    if (eee.udp_mgmt_sock >= 0) {
+        sendto(eee.udp_mgmt_sock, "stop", 4, 0, (struct sockaddr *)&peer_addr, sizeof(struct sockaddr_in));
+    }
 
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_DISCONNECT;

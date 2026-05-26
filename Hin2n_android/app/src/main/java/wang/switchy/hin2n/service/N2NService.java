@@ -211,6 +211,7 @@ public class N2NService extends VpnService {
         if (mN2nSettingInfo.getIpMode() == 0 && mN2nSettingInfo.getVersion() != 4) {
             vpnServiceFd = EstablishVpnService(mN2nSettingInfo.getIp(), getIpAddrPrefixLength(mN2nSettingInfo.getNetmask()));
             if (vpnServiceFd < 0) {
+                EventBus.getDefault().post(new ErrorEvent());
                 return super.onStartCommand(intent, flags, startId);
             }
         }
@@ -270,6 +271,7 @@ public class N2NService extends VpnService {
             return (false);
         }
 
+        Log.d("N2NService", "Stop requested, current status: " + mCurrentStatus);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             stopForeground(true);
 
@@ -279,6 +281,7 @@ public class N2NService extends VpnService {
             public void run() {
                 /* Blocking call */
                 stopEdge();
+                Log.d("N2NService", "Native edge stopped");
                 ThreadUtils.mainThreadExecutor(new Runnable() {
                     @Override
                     public void run() {

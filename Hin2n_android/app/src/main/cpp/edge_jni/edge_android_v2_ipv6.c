@@ -19,14 +19,17 @@
 #define V2_IPV6_MGMT_PORT 5664
 
 extern int edge_v2_ipv6_main(int argc, char *argv[]);
+extern void edge_v2_ipv6_request_stop(void);
 extern int __real_socket(int domain, int type, int protocol);
 extern void __real_exit(int status);
 extern void __real_abort(void);
 
 n2n_edge_status_t *g_status;
+static volatile int stop_requested = 0;
 
 static int protect_socket_v2_ipv6(int fd);
 static void log_edge_v2_ipv6_command_line(int argc, char *argv[]);
+static int android_stop_requested(const char *stage);
 static jmp_buf exit_jmp;
 static volatile int exit_trap_enabled = 0;
 static volatile int exit_trap_status = 1;
@@ -184,6 +187,7 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
         return 1;
     }
     g_status = status;
+    stop_requested = 0;
     cmd = &status->cmd;
     log_file = fopen(cmd->logpath, "a");
     if (log_file) {
@@ -260,6 +264,12 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     }
     argv[argc] = NULL;
     log_edge_v2_ipv6_command_line(argc, argv);
+    if (android_stop_requested("command line prepared")) {
+        if (log_file) {
+            fclose(log_file);
+        }
+        return 0;
+    }
 
     pthread_mutex_lock(&g_status->mutex);
     g_status->running_status = EDGE_STAT_CONNECTED;
@@ -290,6 +300,10 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
 }
 
 int stop_edge_v2_ipv6(void) {
+    stop_requested = 1;
+    edge_v2_ipv6_request_stop();
+    __android_log_write(ANDROID_LOG_INFO, "edge_v2_ipv6", "Stop requested.");
+
     int fd = open_socket(0, 0 /* bind LOOPBACK*/);
     struct sockaddr_in peer_addr;
 
@@ -304,4 +318,15 @@ int stop_edge_v2_ipv6(void) {
     sendto(fd, "stop", 4, 0, (struct sockaddr *)&peer_addr, sizeof(peer_addr));
     close(fd);
     return 0;
+}
+
+static int android_stop_requested(const char *stage) {
+    if (!stop_requested) {
+        return 0;
+    }
+    __android_log_print(ANDROID_LOG_INFO, "edge_v2_ipv6",
+                        "Stop requested while connecting%s%s.",
+                        stage ? " at " : "",
+                        stage ? stage : "");
+    return 1;
 }

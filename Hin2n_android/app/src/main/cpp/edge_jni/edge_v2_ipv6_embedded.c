@@ -31,6 +31,10 @@ int edge_v2_ipv6_main(int argc, char *argv[]) {
     return edge_v2_ipv6_main_impl(argc, argv);
 }
 
+void edge_v2_ipv6_request_stop(void) {
+    g_edge_running = 0;
+}
+
 ssize_t edge_v2_ipv6_android_tuntap_write(tuntap_dev *tuntap, unsigned char *buf, size_t len) {
     n2n_edge_t *eee;
 

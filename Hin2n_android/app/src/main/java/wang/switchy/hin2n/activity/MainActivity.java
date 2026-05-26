@@ -432,6 +432,10 @@ public class MainActivity extends BaseActivity {
             switchCurrentLog(getLogPathForSetting(n2NSettingInfo));
             startService(intent);
         }
+        else if (requestCode == REQUECT_CODE_VPN) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
+            mConnectBtn.setClickable(true);
+        }
         else if (requestCode == REQUEST_CODE_VPN_FOR_START_AT_BOOT) {
             mStartAtBoot = (CheckBox) findViewById(R.id.check_box_start_at_boot);
             if (mStartAtBoot.isChecked()) {
@@ -548,13 +552,16 @@ public class MainActivity extends BaseActivity {
         showLog(false);
         mConnectBtn.setVisibility(View.VISIBLE);
         mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
+        mConnectBtn.setClickable(true);
 
         Toast.makeText(mContext, getString(R.string.toast_connect_failed), Toast.LENGTH_SHORT).show();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onConnectingEvent(ConnectingEvent event) {
-        mConnectBtn.setVisibility(View.GONE);
+        mConnectBtn.setVisibility(View.VISIBLE);
+        mConnectBtn.setImageResource(R.mipmap.ic_state_connect_change);
+        mConnectBtn.setClickable(true);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
