@@ -40,7 +40,7 @@ public class EdgeCmd {
         this.ipMode = ipMode;
         this.ipAddr = ipAddr;
         this.ipNetmask = ipNetmask;
-        this.supernodes = supernodes;
+        this.supernodes = normalizeSupernodesForCore(edgeType, supernodes);
         this.community = community;
         this.encKey = encKey;
         this.devDesc = devDesc;
@@ -69,8 +69,8 @@ public class EdgeCmd {
         this.ipAddr = n2NSettingInfo.getIp();
         this.ipNetmask = n2NSettingInfo.getNetmask();
         this.supernodes = new String[2];
-        this.supernodes[0] = n2NSettingInfo.getSuperNode();
-        this.supernodes[1] = n2NSettingInfo.getSuperNodeBackup();
+        this.supernodes[0] = normalizeSupernodeForCore(this.edgeType, n2NSettingInfo.getSuperNode());
+        this.supernodes[1] = normalizeSupernodeForCore(this.edgeType, n2NSettingInfo.getSuperNodeBackup());
         this.community = n2NSettingInfo.getCommunity();
         this.encKey = n2NSettingInfo.getPassword();
         this.devDesc = n2NSettingInfo.getDevDesc();
@@ -104,8 +104,8 @@ public class EdgeCmd {
         if (!checkIPV4Mask(ipNetmask)) {
             invalids.add("ipNetmask");
         }
-        if (supernodes == null || !checkSupernode(supernodes[0]) ||
-                (supernodes[1] != null && !supernodes[1].isEmpty() && !checkSupernode(supernodes[1]))) {
+        if (supernodes == null || !checkSupernode(edgeType, supernodes[0]) ||
+                (supernodes[1] != null && !supernodes[1].isEmpty() && !checkSupernode(edgeType, supernodes[1]))) {
             invalids.add("(backup)supernode");
         }
         if (!checkCommunity(community)) {
@@ -266,6 +266,66 @@ public class EdgeCmd {
         }
 
         return true;
+    }
+
+    public static boolean checkSupernode(int edgeType, String supernode) {
+        if (edgeType == 4) {
+            return checkSupernodeV2IPV6(supernode);
+        }
+        return checkSupernode(supernode);
+    }
+
+    public static boolean checkSupernodeV2IPV6(String supernode) {
+        if (supernode == null || supernode.isEmpty()) {
+            return false;
+        }
+        String normalized = stripTxtPrefix(supernode);
+        if (normalized.isEmpty()) {
+            return false;
+        }
+        if (checkSupernode(normalized)) {
+            return true;
+        }
+        if (normalized.regionMatches(true, 0, "http:", 0, 5)
+                || normalized.regionMatches(true, 0, "https:", 0, 6)) {
+            return false;
+        }
+        if (normalized.indexOf(':') >= 0) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static String[] normalizeSupernodesForCore(int edgeType, String[] supernodes) {
+        if (supernodes == null) {
+            return null;
+        }
+        String[] normalized = new String[supernodes.length];
+        for (int i = 0; i < supernodes.length; ++i) {
+            normalized[i] = normalizeSupernodeForCore(edgeType, supernodes[i]);
+        }
+        return normalized;
+    }
+
+    private static String normalizeSupernodeForCore(int edgeType, String supernode) {
+        if (edgeType == 4) {
+            return stripTxtPrefix(supernode);
+        }
+        return supernode;
+    }
+
+    private static String stripTxtPrefix(String supernode) {
+        if (supernode == null) {
+            return null;
+        }
+        if (supernode.regionMatches(true, 0, "txt://", 0, 6)) {
+            return supernode.substring(6);
+        }
+        if (supernode.regionMatches(true, 0, "txt:", 0, 4)) {
+            return supernode.substring(4);
+        }
+        return supernode;
     }
 
     public static boolean checkCommunity(String community) {

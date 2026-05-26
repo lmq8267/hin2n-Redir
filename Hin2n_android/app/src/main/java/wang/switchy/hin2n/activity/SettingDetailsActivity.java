@@ -766,7 +766,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         /**
          * 基础配置参数检查
          */
-        if (!EdgeCmd.checkSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
+        int ver = getN2nVersion();
+        if (!EdgeCmd.checkSupernode(ver, mSuperNodeTIL.getEditText().getText().toString())) {
             setFormatError(mSuperNodeTIL);
             mSuperNodeTIL.getEditText().requestFocus();
             return false;
@@ -835,9 +836,8 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         /**
          * 高级配置参数检查
          */
-        int ver = getN2nVersion();
         // backup supernode => v2, v2s, v2_ipv6
-        if ((ver == 1 || ver == 2 || ver == 4) && !TextUtils.isEmpty(mSuperNodeBackup.getEditText().getText().toString()) && !EdgeCmd.checkSupernode(mSuperNodeBackup.getEditText().getText().toString())) {
+        if ((ver == 1 || ver == 2 || ver == 4) && !TextUtils.isEmpty(mSuperNodeBackup.getEditText().getText().toString()) && !EdgeCmd.checkSupernode(ver, mSuperNodeBackup.getEditText().getText().toString())) {
             setFormatError(mSuperNodeBackup);
             mSuperNodeBackup.getEditText().requestFocus();
             mMoreSettingCheckBox.setChecked(true);
