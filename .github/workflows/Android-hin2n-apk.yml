@@ -3,6 +3,12 @@ name: 编译android-hin2n
 on:
   push:
   workflow_dispatch:
+    inputs:
+      update_n2n_v2_ipv6:
+        description: '是否更新 n2n_v2_ipv6 到最新提交代码？'
+        required: false
+        type: boolean
+        default: false
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -20,6 +26,28 @@ jobs:
         uses: actions/checkout@main
         with:
           submodules: recursive
+      - name: 更新 n2n_v2_ipv6 子模块到最新提交
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.update_n2n_v2_ipv6 == 'true' }}
+        run: |
+          cd bundles/n2n_v2_ipv6
+          echo "🔄 正在获取最新代码..."
+          git fetch origin master
+          OLD_HASH=$(git rev-parse HEAD)
+          LATEST_HASH=$(git rev-parse origin/master)
+          if [ "$OLD_HASH" != "$LATEST_HASH" ]; then
+            git checkout origin/master
+            echo ""
+            echo -e "\033[32m✅ n2n_v2_ipv6 已成功更新到最新提交！\033[0m"
+            echo -e "\033[36m📌 提交哈希: \033[1m$LATEST_HASH\033[0m"
+            echo -e "\033[36m📋 更新说明:\033[0m"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            git log --oneline --no-decorate "$OLD_HASH".."$LATEST_HASH"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo ""
+            echo -e "\033[33mℹ️ n2n_v2_ipv6 已是最新提交，无需更新\033[0m"
+            echo -e "\033[36m📌 提交哈希: \033[1m$LATEST_HASH\033[0m"
+          fi
       - name: 应用 v23 补丁
         run: |
           for patch in patches/n2n_v2_ipv6_*.patch; do
@@ -52,9 +80,10 @@ jobs:
          export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH
          export ANDROID_HOME=/opt/gcc/Android/sdk
          export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
-         rm -rf app/Hin2n.jks
+         
          if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ] && [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
            echo "使用仓库密钥签名"
+           rm -rf app/Hin2n.jks
            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/Hin2n.jks
            export KEYSTORE_FILE=Hin2n.jks
            export KEYSTORE_PASSWORD="${{ secrets.KEYSTORE_PASSWORD }}"
@@ -66,6 +95,12 @@ jobs:
            if [ -z "$KEY_PASSWORD" ]; then
              export KEY_PASSWORD="$KEYSTORE_PASSWORD"
            fi
+         elif [ -f app/Hin2n.jks ] ; then
+           echo "使用仓库现有密钥文件签名"
+           export KEYSTORE_FILE=Hin2n.jks
+           export KEYSTORE_PASSWORD=My-Hin2n
+           export KEY_ALIAS=Hin2n
+           export KEY_PASSWORD=My-Hin2n
          else
            echo "生成临时密钥签名"
            export KEYSTORE_FILE=Hin2n.jks
