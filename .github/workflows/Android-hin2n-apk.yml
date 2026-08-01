@@ -51,8 +51,8 @@ jobs:
       - name: 应用 v23 补丁
         run: |
           for patch in patches/n2n_v2_ipv6_*.patch; do
-            git apply --check "$patch"
-            git apply "$patch"
+            git apply --ignore-space-change --check "$patch"
+            git apply --ignore-space-change "$patch"
           done
       - name: 清理失败和取消的运行记录
         uses: Mattraks/delete-workflow-runs@v2

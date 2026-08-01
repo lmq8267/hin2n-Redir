@@ -54,7 +54,7 @@
     <string name="more_settings">More settings</string> 
     <string name="encryption_method">Encryption method</string> 
     <string name="supernode_2">Supernode 2</string> 
-    <string name="hole_punch_interval">Hole-punch interval(s)</string> 
+    <string name="hole_punch_interval">NAT hole-punch interval (seconds)</string>
     <string name="local_ip">Local IP</string> 
     <string name="v2_ipv6_address">Interface IP/prefix (IPv4 or IPv6)</string>
     <string name="v2_ipv6_supernode_address_family">Supernode DNS address family</string>
@@ -64,9 +64,9 @@
     <string name="automatically_detect_local_ip">Automatically detect local IP</string> 
     <string name="local_port">Local port</string>
     <string name="enable_bypass">Enable bypass (-b)</string>
-    <string name="bypass_port_hint">Local proxy (bypass) port (v2-ipv6)</string>
-    <string name="bypass_port_description">Optional: leave empty for the upstream default port, or enter 1-65535 for -b &lt;port&gt;.</string>
-    <string name="gateway_ip_address">Gateway IP address</string>
+    <string name="bypass_port_hint">Local proxy port (-b, default 9000)</string>
+    <string name="bypass_port_description">Optional: leave empty to use default port 9000, or enter 1-65535 for -b &lt;port&gt;.</string>
+    <string name="gateway_ip_address">Exit IP address (remote virtual IP)</string>
     <string name="dns_server_ip_address">DNS server IP address</string> 
     <string name="mac_address">Mac address</string> 
     <string name="supernodes_are_running_dynamic_ips">Supernodes are running dynamic IPs</string> 
@@ -93,7 +93,7 @@
     <string name="contact">Contact</string>
     <string name="toast_vpn_parameter_not_accepted">Parameter is not accepted by the operating system.</string>
     <string name="toast_vpn_parameter_cannot_apply">Parameter cannot be applied by the operating system.</string>
-    <string name="toast_stop_in_progress">A stop command is already in progress.</string>
+    <string name="toast_stop_in_progress">Stopping connection, please wait.</string>
     <string name="toast_no_setting_selected">No setting selected.</string>
     <string name="toast_need_permissions">Permissions are required.</string>
     <string name="toast_error">Error</string>

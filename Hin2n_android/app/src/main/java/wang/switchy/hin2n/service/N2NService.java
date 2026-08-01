@@ -61,7 +61,7 @@ public class N2NService extends VpnService {
 
     private static final int sNotificationId = 1;
     private NotificationManager mNotificationManager;
-    private boolean mStopInProgress = false;
+    private volatile boolean mStopInProgress = false;
     private FileObserver mFileObserver;
 
     @Override
@@ -294,9 +294,14 @@ public class N2NService extends VpnService {
         ThreadUtils.cachedThreadExecutor(new Runnable() {
             @Override
             public void run() {
-                /* Blocking call */
-                stopEdge();
-                Log.d("N2NService", "Native edge stopped");
+                try {
+                    /* Native stop waits for the edge thread to release its sockets. */
+                    stopEdge();
+                    Log.d("N2NService", "Native edge stopped");
+                } catch (Throwable e) {
+                    /* Always finish the Java-side stop state if JNI/native cleanup fails. */
+                    Log.e("N2NService", "Failed to stop native edge", e);
+                }
                 ThreadUtils.mainThreadExecutor(new Runnable() {
                     @Override
                     public void run() {
@@ -309,15 +314,14 @@ public class N2NService extends VpnService {
                                 mParcelFileDescriptor = null;
                             }
                         } catch (IOException e) {
-                            EventBus.getDefault().post(new ErrorEvent());
-                            return;
+                            Log.e("N2NService", "Failed to close VPN descriptor", e);
                         }
 
-                        EventBus.getDefault().post(new StopEvent());
                         mStopInProgress = false;
                         if(mFileObserver != null){
                             mFileObserver.stopWatching();  //清除日志文件会导致FileObserver失效，要先stop再start
                         }
+                        EventBus.getDefault().post(new StopEvent());
                         if (onStopCallback != null)
                             onStopCallback.run();
 

@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>
 #include <stddef.h>
+#include <ifaddrs.h>
 #include <tun2tap/tun2tap.h>
 
 #define tuntap_write edge_v2_ipv6_android_tuntap_write

@@ -385,3 +385,4 @@ static int android_stop_requested(const char *stage) {
                         stage ? stage : "");
     return 1;
 }
+

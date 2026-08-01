@@ -54,7 +54,7 @@
     <string name="more_settings">更多设置</string> 
     <string name="encryption_method">加密方式</string> 
     <string name="supernode_2">中心节点2</string> 
-    <string name="hole_punch_interval">打洞间隔(秒)</string> 
+    <string name="hole_punch_interval">NAT打洞间隔（秒）</string>
     <string name="local_ip">本地IP地址</string> 
     <string name="v2_ipv6_address">接口IP/前缀（IPv4或IPv6）</string>
     <string name="v2_ipv6_supernode_address_family">中心节点 DNS 地址族</string>
@@ -64,9 +64,9 @@
     <string name="automatically_detect_local_ip">自动识别本地IP地址</string> 
     <string name="local_port">本地端口</string>
     <string name="enable_bypass">启用 bypass (-b)</string>
-    <string name="bypass_port_hint">本地代理(bypass)端口 (v2-ipv6)</string>
-    <string name="bypass_port_description">可选：留空使用上游默认端口；填写 1-65535 则使用 -b &lt;port&gt;。</string>
-    <string name="gateway_ip_address">网关IP</string>
+    <string name="bypass_port_hint">本地代理端口（-b，默认 9000）</string>
+    <string name="bypass_port_description">可选：留空使用默认端口 9000；填写 1-65535 则使用 -b &lt;port&gt;。</string>
+    <string name="gateway_ip_address">出口IP地址（对端虚拟IP）</string>
     <string name="dns_server_ip_address">DNS服务器IP</string> 
     <string name="mac_address">Mac地址</string> 
     <string name="supernodes_are_running_dynamic_ips">中心节点的IP不是固定的</string> 

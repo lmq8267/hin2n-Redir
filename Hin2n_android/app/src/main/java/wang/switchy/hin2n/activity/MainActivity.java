@@ -146,18 +146,7 @@ public class MainActivity extends BaseActivity {
 //        mScrollLogAction = (NestedScrollView) findViewById(R.id.scroll_log_action);
         mRecyclerView = (RecyclerView) findViewById(R.id.scroll_log_action);
 
-        if (N2NService.INSTANCE == null) {
-            mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
-        } else {
-            EdgeStatus.RunningStatus status = N2NService.INSTANCE.getCurrentStatus();
-            if (status == EdgeStatus.RunningStatus.CONNECTED) {
-                mConnectBtn.setImageResource(R.mipmap.ic_state_connect);
-            } else if (status == EdgeStatus.RunningStatus.SUPERNODE_DISCONNECT) {
-                mConnectBtn.setImageResource(R.mipmap.ic_state_supernode_diconnect);
-            } else {
-                mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
-            }
-        }
+        updateConnectButtonState();
 
         mConnectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -167,11 +156,16 @@ public class MainActivity extends BaseActivity {
                     return;
                 }
 
+                if (N2NService.INSTANCE != null && N2NService.INSTANCE.isStopInProgress()) {
+                    return;
+                }
+
                 EdgeStatus.RunningStatus status = N2NService.INSTANCE == null ? EdgeStatus.RunningStatus.DISCONNECT : N2NService.INSTANCE.getCurrentStatus();
                 if (N2NService.INSTANCE != null && status != EdgeStatus.RunningStatus.DISCONNECT && status != EdgeStatus.RunningStatus.FAILED) {
                     /* Asynchronous call */
                     mConnectBtn.setClickable(false);
                     mConnectBtn.setImageResource(R.mipmap.ic_state_connect_change);
+                    Toast.makeText(mContext, R.string.toast_stop_in_progress, Toast.LENGTH_SHORT).show();
                     N2NService.INSTANCE.stop(null);
                 } else {
                     mConnectBtn.setClickable(false);
@@ -473,18 +467,7 @@ public class MainActivity extends BaseActivity {
             }
 
             mConnectBtn.setVisibility(View.VISIBLE);
-            if (N2NService.INSTANCE == null) {
-                mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
-            } else {
-                EdgeStatus.RunningStatus status = N2NService.INSTANCE.getCurrentStatus();
-                if (status == EdgeStatus.RunningStatus.CONNECTED) {
-                    mConnectBtn.setImageResource(R.mipmap.ic_state_connect);
-                } else if (status == EdgeStatus.RunningStatus.SUPERNODE_DISCONNECT) {
-                    mConnectBtn.setImageResource(R.mipmap.ic_state_supernode_diconnect);
-                } else {
-                    mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
-                }
-            }
+            updateConnectButtonState();
         } else {
             mStartAtBoot = (CheckBox) findViewById(R.id.check_box_start_at_boot);
             mStartAtBoot.setClickable(false);
@@ -511,6 +494,36 @@ public class MainActivity extends BaseActivity {
         if (EventBus.getDefault().isRegistered(this)) {
             EventBus.getDefault().unregister(this);
         }
+    }
+
+    private void updateConnectButtonState() {
+        if (mConnectBtn == null) {
+            return;
+        }
+
+        if (N2NService.INSTANCE == null) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
+            mConnectBtn.setClickable(true);
+            return;
+        }
+
+        if (N2NService.INSTANCE.isStopInProgress()) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_connect_change);
+            mConnectBtn.setClickable(false);
+            return;
+        }
+
+        EdgeStatus.RunningStatus status = N2NService.INSTANCE.getCurrentStatus();
+        if (status == EdgeStatus.RunningStatus.CONNECTED) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_connect);
+        } else if (status == EdgeStatus.RunningStatus.SUPERNODE_DISCONNECT) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_supernode_diconnect);
+        } else if (status == EdgeStatus.RunningStatus.CONNECTING) {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_connect_change);
+        } else {
+            mConnectBtn.setImageResource(R.mipmap.ic_state_disconnect);
+        }
+        mConnectBtn.setClickable(true);
     }
 
 
