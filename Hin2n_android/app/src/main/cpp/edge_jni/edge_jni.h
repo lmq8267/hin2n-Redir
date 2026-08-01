@@ -43,6 +43,9 @@ typedef struct n2n_edge_cmd_st
     char* logpath;
     char* devDesc;
     int header_encryption;
+    char bypass_port[16]; /* v2-ipv6: optional local proxy ("bypass") port */
+    int bypass_enabled; /* v2-ipv6: pass -b when enabled */
+    int gaming_mode;
 } n2n_edge_cmd_t;
 
 enum

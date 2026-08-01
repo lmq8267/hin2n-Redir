@@ -9,7 +9,7 @@
 
 #define tuntap_write edge_v2_ipv6_android_tuntap_write
 #define main edge_v2_ipv6_main_impl
-#include "../n2n_v2_ipv6/edge.c"
+#include "edge.c"
 #undef main
 #undef tuntap_write
 

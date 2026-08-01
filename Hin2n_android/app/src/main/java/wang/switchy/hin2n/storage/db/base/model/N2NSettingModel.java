@@ -44,6 +44,9 @@ public class N2NSettingModel /*implements Parcelable*/ {
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
+    String bypassPort; /* v2-ipv6: optional local proxy ("bypass") port */
+    boolean bypassEnabled; /* v2-ipv6: upstream -b */
+    boolean gamingMode; /* v2-ipv6: upstream -G gaming mode */
 
 
     public String getSuperNode() {
@@ -244,11 +247,35 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.headerEnc = headerEnc;
     }
 
+    public String getBypassPort() {
+        return this.bypassPort;
+    }
+
+    public void setBypassPort(String bypassPort) {
+        this.bypassPort = bypassPort;
+    }
+
+    public boolean getBypassEnabled() {
+        return this.bypassEnabled;
+    }
+
+    public void setBypassEnabled(boolean bypassEnabled) {
+        this.bypassEnabled = bypassEnabled;
+    }
+
+    public boolean getGamingMode() {
+        return this.gamingMode;
+    }
+
+    public void setGamingMode(boolean gamingMode) {
+        this.gamingMode = gamingMode;
+    }
+
     @Generated
     public N2NSettingModel(Long id, int version, String name, int ipMode, String ip, String netmask, String community, String password, String devDesc,
             String superNode, boolean moreSettings, String superNodeBackup, String macAddr, int mtu, String localIP, int holePunchInterval,
             boolean resoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast, boolean useHttpTunnel, int traceLevel,
-            boolean isSelcected, String gatewayIp, String dnsServer, String encryptionMode, boolean headerEnc) {
+            boolean isSelcected, String gatewayIp, String dnsServer, String encryptionMode, boolean headerEnc, String bypassPort, boolean gamingMode, boolean bypassEnabled) {
         this.id = id;
         this.version = version;
         this.name = name;
@@ -276,6 +303,9 @@ public class N2NSettingModel /*implements Parcelable*/ {
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
+        this.bypassPort = bypassPort;
+        this.gamingMode = gamingMode;
+        this.bypassEnabled = bypassEnabled;
     }
 
     @Generated
@@ -320,6 +350,9 @@ public class N2NSettingModel /*implements Parcelable*/ {
                 ", dnsServer=" + dnsServer +
                 ", encryptionMode =" + encryptionMode +
                 ", headerEnc =" + headerEnc +
+                ", bypassPort =" + bypassPort +
+                ", bypassEnabled =" + bypassEnabled +
+                ", gamingMode =" + gamingMode +
                 '}';
     }
 

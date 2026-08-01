@@ -151,6 +151,9 @@ public class N2NService extends VpnService {
 
         try {
             InetAddress ipv6Address = InetAddress.getByName(address);
+            if (ipv6Address.getAddress().length != 16) {
+                return;
+            }
             builder.addAddress(ipv6Address, prefixLength);
             if (prefixLength > 0) {
                 builder.addRoute(getNetworkAddress(ipv6Address, prefixLength).getHostAddress(), prefixLength);

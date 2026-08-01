@@ -1,7 +1,7 @@
-diff --git a/bundles/n2n_v2_ipv6/edge.c b/bundles/n2n_v2_ipv6/edge.c
+diff --git a/bundles/n2n_v2_ipv6/src/edge.c b/bundles/n2n_v2_ipv6/src/edge.c
 index 4e1d0ff..19385eb 100644
---- a/bundles/n2n_v2_ipv6/edge.c
-+++ b/bundles/n2n_v2_ipv6/edge.c
+--- a/bundles/n2n_v2_ipv6/src/edge.c
++++ b/bundles/n2n_v2_ipv6/src/edge.c
 @@ -2917,8 +2917,6 @@ static void readFromMgmtSocket(n2n_edge_t *eee, int *keep_running) {
  static void readFromIPSocket( n2n_edge_t * eee, SOCKET fd )
  {

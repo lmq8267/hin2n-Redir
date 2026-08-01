@@ -365,12 +365,60 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- v2-ipv6: -b enables bypass, with an optional port -->
+                <RelativeLayout
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/rl_bypass"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/til_local_port">
+
+                    <CheckBox
+                        android:id="@+id/bypass_check_box"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toRightOf="@id/bypass_check_box"
+                        android:text="@string/enable_bypass"/>
+                </RelativeLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_marginTop="5dp"
+                    android:id="@+id/til_bypass_port"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/rl_bypass"
+                    android:hint="@string/bypass_port_hint">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tie_bypass_port"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="number" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:id="@+id/tv_bypass_port_desc"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/til_bypass_port"
+                    android:text="@string/bypass_port_description"
+                    android:textSize="12sp"
+                    android:textColor="@android:color/darker_gray"/>
+
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/til_gateway_ip"
                     android:layout_marginTop="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/til_local_port"
+                    android:layout_below="@id/tv_bypass_port_desc"
                     android:hint="@string/gateway_ip_address">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -490,6 +538,7 @@
                         android:layout_height="wrap_content"/>
 
                     <TextView
+                        android:id="@+id/tv_header_enc_label"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_centerVertical="true"
@@ -499,10 +548,30 @@
 
                 <RelativeLayout
                     android:layout_marginTop="5dp"
+                    android:id="@+id/rl_gaming_mode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@id/rl_header_enc">
+
+                    <CheckBox
+                        android:id="@+id/gaming_mode_check_box"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_toRightOf="@id/gaming_mode_check_box"
+                        android:text="@string/use_gaming_mode"/>
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_marginTop="5dp"
                     android:id="@+id/rl_use_http_tunnel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_below="@id/rl_header_enc"
+                    android:layout_below="@id/rl_gaming_mode"
                     android:visibility="gone">
 
                     <CheckBox

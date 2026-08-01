@@ -18,6 +18,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -109,6 +110,14 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
     private Spinner mEncryptionMode;
     private RelativeLayout mHeaderEncView;
     private CheckBox mHeaderEncCheckBox;
+    private TextView mHeaderEncLabel;
+    private TextInputLayout mBypassPort;
+    private TextView mBypassPortDesc;
+    private RelativeLayout mBypassView;
+    private CheckBox mBypassCheckBox;
+    private RelativeLayout mGamingModeView;
+    private CheckBox mGamingModeCheckBox;
+    private ArrayAdapter<CharSequence> mEncryptionAdapter;
 
     @Override
     protected BaseTemplate createTemplate() {
@@ -142,11 +151,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mVersionGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int checkedId) {
+                updateEncryptionModeAdapter(checkedId == R.id.rb_v2_ipv6);
                 if (type == TYPE_SETTING_ADD) {
-                    if (checkedId == R.id.rb_v3)
-                        mEncryptionMode.setSelection(1);
-                    else
-                        mEncryptionMode.setSelection(0);
+                    if (checkedId == R.id.rb_v2_ipv6) {
+                        mEncryptionMode.setSelection(mEncryptionAdapter.getPosition("ChaCha20"));
+                    } else if (checkedId == R.id.rb_v3) {
+                        mEncryptionMode.setSelection(mEncryptionAdapter.getPosition("AES-CBC"));
+                    } else {
+                        mEncryptionMode.setSelection(mEncryptionAdapter.getPosition("Twofish"));
+                    }
                 }
                 updateVersionGroupCheck(checkedId);
             }
@@ -244,11 +257,15 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         mEncryptionMode = (Spinner) findViewById(R.id.til_encryption_mode);
         mHeaderEncView = (RelativeLayout) findViewById(R.id.rl_header_enc);
         mHeaderEncCheckBox = (CheckBox) findViewById(R.id.header_enc_check_box);
+        mHeaderEncLabel = (TextView) findViewById(R.id.tv_header_enc_label);
+        mBypassPort = (TextInputLayout) findViewById(R.id.til_bypass_port);
+        mBypassPortDesc = (TextView) findViewById(R.id.tv_bypass_port_desc);
+        mBypassView = (RelativeLayout) findViewById(R.id.rl_bypass);
+        mBypassCheckBox = (CheckBox) findViewById(R.id.bypass_check_box);
+        mGamingModeView = (RelativeLayout) findViewById(R.id.rl_gaming_mode);
+        mGamingModeCheckBox = (CheckBox) findViewById(R.id.gaming_mode_check_box);
 
-        ArrayAdapter<CharSequence> encAdapter = ArrayAdapter.createFromResource(this, R.array.encryption_modes,
-                android.R.layout.simple_spinner_item);
-        encAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        mEncryptionMode.setAdapter(encAdapter);
+        updateEncryptionModeAdapter(false);
 
         mTraceLevelSpinner = (Spinner) findViewById(R.id.spinner_trace_level);
 
@@ -310,8 +327,9 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mMoreSettingCheckBox.setChecked(false);
             mGatewayIp.getEditText().setText(R.string.item_default_gateway_ip);
             mDnsServer.getEditText().setText(null);
-            mEncryptionMode.setSelection(encAdapter.getPosition("Twofish"));
+            mEncryptionMode.setSelection(mEncryptionAdapter.getPosition("Twofish"));
             mHeaderEncCheckBox.setChecked(Boolean.valueOf(getString(R.string.item_default_headerenc)));
+            mGamingModeCheckBox.setChecked(false);
 
             mDevDescTIL.getEditText().setText(null);
 
@@ -351,7 +369,7 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mSuperNodeTIL.getEditText().setText(mN2NSettingModel.getSuperNode());
             mGatewayIp.getEditText().setText(mN2NSettingModel.getGatewayIp());
             mDnsServer.getEditText().setText(mN2NSettingModel.getDnsServer());
-            mEncryptionMode.setSelection(encAdapter.getPosition(mN2NSettingModel.getEncryptionMode()));
+            selectEncryptionMode(mN2NSettingModel.getEncryptionMode());
 
             mSuperNodeBackup.getEditText().setText(mN2NSettingModel.getSuperNodeBackup());
             mMacAddr.getEditText().setText(mN2NSettingModel.getMacAddr());
@@ -368,8 +386,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             mResoveSupernodeIPCheckBox.setChecked(mN2NSettingModel.getResoveSupernodeIP());
             setV2_IPV6AddressFamilySelection(mN2NSettingModel.getResoveSupernodeIP(), mN2NSettingModel.getUseHttpTunnel());
             mLocalPort.getEditText().setText(String.valueOf(mN2NSettingModel.getLocalPort()));
+            mBypassPort.getEditText().setText(mN2NSettingModel.getBypassPort());
+            mBypassCheckBox.setChecked(mN2NSettingModel.getBypassEnabled());
             mAllowRoutinCheckBox.setChecked(mN2NSettingModel.getAllowRouting());
             mHeaderEncCheckBox.setChecked(mN2NSettingModel.getHeaderEnc());
+            mGamingModeCheckBox.setChecked(mN2NSettingModel.getGamingMode());
             mAcceptMuticastCheckBox.setChecked(!mN2NSettingModel.getDropMuticast());
             mUseHttpTunnelCheckBox.setChecked(mN2NSettingModel.getUseHttpTunnel());
             mTraceLevelSpinner.setSelection(Integer.valueOf(mN2NSettingModel.getTraceLevel()));
@@ -380,6 +401,49 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         }
 
         updateVersionGroupCheck(mVersionGroup.getCheckedRadioButtonId());
+        updateEncryptionModeAdapter(getN2nVersion() == 4);
+        if (type == TYPE_SETTING_MODIFY && mN2NSettingModel != null) {
+            selectEncryptionMode(mN2NSettingModel.getEncryptionMode());
+        }
+    }
+
+    private void updateEncryptionModeAdapter(boolean v2Ipv6) {
+        if (mEncryptionMode == null) {
+            return;
+        }
+        String selected = null;
+        if (mEncryptionMode.getSelectedItem() != null) {
+            selected = mEncryptionMode.getSelectedItem().toString();
+        }
+        int arrayId = v2Ipv6 ? R.array.encryption_modes_v2_ipv6 : R.array.encryption_modes;
+        mEncryptionAdapter = ArrayAdapter.createFromResource(this, arrayId,
+                android.R.layout.simple_spinner_item);
+        mEncryptionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mEncryptionMode.setAdapter(mEncryptionAdapter);
+        int position = selected == null ? -1 : mEncryptionAdapter.getPosition(selected);
+        if (position >= 0) {
+            mEncryptionMode.setSelection(position);
+        }
+    }
+
+    private void selectEncryptionMode(String mode) {
+        if (mode == null || mEncryptionAdapter == null) {
+            return;
+        }
+        int position = mEncryptionAdapter.getPosition(mode);
+        if (position < 0 && getN2nVersion() == 4 && "Disable".equals(mode)) {
+            position = 0;
+        }
+        if (position >= 0) {
+            mEncryptionMode.setSelection(position);
+        }
+    }
+
+    private String getEncryptionModeValue() {
+        if (getN2nVersion() == 4 && mEncryptionMode.getSelectedItemPosition() == 0) {
+            return "Disable";
+        }
+        return mEncryptionMode.getSelectedItem().toString();
     }
 
     @Override
@@ -420,6 +484,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
                 mHeaderEncView.setVisibility(View.GONE);
+                mGamingModeView.setVisibility(View.GONE);
+                mBypassView.setVisibility(View.GONE);
+                mBypassPort.setVisibility(View.GONE);
+                mBypassPortDesc.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v1);
                 }
@@ -440,6 +508,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
                 mHeaderEncView.setVisibility(View.VISIBLE);
+                mHeaderEncLabel.setText(R.string.enable_full_header_encryption);
+                mGamingModeView.setVisibility(View.GONE);
+                mBypassView.setVisibility(View.GONE);
+                mBypassPort.setVisibility(View.GONE);
+                mBypassPortDesc.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2);
                 }
@@ -461,6 +534,10 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mResolveSnLayout.setVisibility(View.VISIBLE);
                 mEncryptionBox.setVisibility(View.GONE);
                 mHeaderEncView.setVisibility(View.GONE);
+                mGamingModeView.setVisibility(View.GONE);
+                mBypassView.setVisibility(View.GONE);
+                mBypassPort.setVisibility(View.GONE);
+                mBypassPortDesc.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2s);
                 }
@@ -484,6 +561,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
                 mHeaderEncView.setVisibility(View.VISIBLE);
+                mHeaderEncLabel.setText(R.string.enable_full_header_encryption);
+                mGamingModeView.setVisibility(View.GONE);
+                mBypassView.setVisibility(View.GONE);
+                mBypassPort.setVisibility(View.GONE);
+                mBypassPortDesc.setVisibility(View.GONE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v3);
                 }
@@ -508,7 +590,12 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mDnsServer.setVisibility(View.VISIBLE);
                 mResolveSnLayout.setVisibility(View.GONE);
                 mEncryptionBox.setVisibility(View.VISIBLE);
-                mHeaderEncView.setVisibility(View.GONE);
+                mHeaderEncView.setVisibility(View.VISIBLE);
+                mHeaderEncLabel.setText(R.string.use_websocket_tcp);
+                mGamingModeView.setVisibility(View.VISIBLE);
+                mBypassView.setVisibility(View.VISIBLE);
+                mBypassPort.setVisibility(View.VISIBLE);
+                mBypassPortDesc.setVisibility(View.VISIBLE);
                 if (isDefaultSupernode(mSuperNodeTIL.getEditText().getText().toString())) {
                     mSuperNodeTIL.getEditText().setText(R.string.item_default_supernode_v2_ipv6);
                 }
@@ -564,6 +651,13 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
         return mac;
     }
 
+    private String getBypassPortValue() {
+        if (mBypassPort == null || mBypassPort.getEditText() == null) {
+            return "";
+        }
+        return mBypassPort.getEditText().getText().toString().trim();
+    }
+
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -600,8 +694,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         mTraceLevelSpinner.getSelectedItemPosition(), !hasSelected,
                         mGatewayIp.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
-                        mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked());
+                        getEncryptionModeValue(),
+                        mHeaderEncCheckBox.isChecked(),
+                        getBypassPortValue(),
+                        getN2nVersion() == 4 && mGamingModeCheckBox.isChecked(),
+                        getN2nVersion() == 4 && mBypassCheckBox.isChecked());
                 n2NSettingModelDao.insert(mN2NSettingModel);
 
                 if (!hasSelected) {
@@ -654,8 +751,11 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                         mTraceLevelSpinner.getSelectedItemPosition(), mN2NSettingModel.getIsSelcected(),
                         mGatewayIp.getEditText().getText().toString(),
                         mDnsServer.getEditText().getText().toString(),
-                        mEncryptionMode.getSelectedItem().toString(),
-                        mHeaderEncCheckBox.isChecked());
+                        getEncryptionModeValue(),
+                        mHeaderEncCheckBox.isChecked(),
+                        getBypassPortValue(),
+                        getN2nVersion() == 4 && mGamingModeCheckBox.isChecked(),
+                        getN2nVersion() == 4 && mBypassCheckBox.isChecked());
                 n2NSettingModelDao1.update(mN2NSettingModel);
 
                 if (N2NService.INSTANCE != null &&
@@ -879,9 +979,9 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
                 mLocalIP.setErrorEnabled(false);
             }
         }
-        // IPv6 address/prefix => v2_ipv6 -A
+        // Interface IPv4/IPv6 address/prefix => v2_ipv6 -a
         if (ver == 4 && !TextUtils.isEmpty(mLocalIP.getEditText().getText().toString())) {
-            if (!EdgeCmd.checkIPV6Prefix(mLocalIP.getEditText().getText().toString())) {
+            if (!EdgeCmd.checkIPV4OrIPV6Prefix(mLocalIP.getEditText().getText().toString())) {
                 setFormatError(mLocalIP);
                 mLocalIP.getEditText().requestFocus();
                 mMoreSettingCheckBox.setChecked(true);
@@ -900,6 +1000,17 @@ public class SettingDetailsActivity extends BaseActivity implements View.OnClick
             return false;
         } else {
             mLocalPort.setErrorEnabled(false);
+        }
+        // bypass port => v2_ipv6 -b optional port: validate only when bypass is enabled.
+        if (ver == 4 && mBypassCheckBox.isChecked() && !TextUtils.isEmpty(mBypassPort.getEditText().getText().toString()) &&
+                !isIntInRange(mBypassPort.getEditText().getText().toString(), 1, 65535)) {
+            setFormatError(mBypassPort);
+            mBypassPort.getEditText().requestFocus();
+            mMoreSettingCheckBox.setChecked(true);
+            mMoreSettingView.setVisibility(View.VISIBLE);
+            return false;
+        } else {
+            mBypassPort.setErrorEnabled(false);
         }
         // macAddr => v1, v2, v2s
         if (!TextUtils.isEmpty(mMacAddr.getEditText().getText().toString()) && !EdgeCmd.checkMacAddr(mMacAddr.getEditText().getText().toString())) {

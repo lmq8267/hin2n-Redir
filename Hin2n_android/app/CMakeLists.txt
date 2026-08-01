@@ -192,40 +192,49 @@ target_include_directories(edge_v3 PUBLIC
 target_link_libraries(edge_v3 uip c-ares libcurl)
 target_link_libraries(edge_v3 ${OPENSSL_LIBRARIES})
 
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/src/main/cpp/n2n_v2_ipv6/CMakeLists.txt" N2N_V2_IPV6_VERSION_LINE REGEX "^set\\(N2N_VERSION[ \t]+.*\\)")
+set(N2N_V2_IPV6_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../bundles/n2n_v2_ipv6")
+set(N2N_V2_IPV6_SRC "${N2N_V2_IPV6_ROOT}/src")
+file(STRINGS "${N2N_V2_IPV6_ROOT}/CMakeLists.txt" N2N_V2_IPV6_VERSION_LINE REGEX "^set\\(N2N_VERSION[ \t]+.*\\)")
 string(REGEX REPLACE "^set\\(N2N_VERSION[ \t]+\"?([^\"\\) ]+)\"?\\).*" "\\1" N2N_V2_IPV6_VERSION "${N2N_V2_IPV6_VERSION_LINE}")
 if(NOT N2N_V2_IPV6_VERSION)
-message(FATAL_ERROR "Failed to read v2-ipv6 N2N_VERSION from src/main/cpp/n2n_v2_ipv6/CMakeLists.txt")
+message(FATAL_ERROR "Failed to read v2-ipv6 N2N_VERSION from ${N2N_V2_IPV6_ROOT}/CMakeLists.txt")
 endif()
 
 add_library(edge_v2_ipv6 SHARED
-        src/main/cpp/n2n_v2_ipv6/n2n.c
-        src/main/cpp/n2n_v2_ipv6/wire.c
-        src/main/cpp/n2n_v2_ipv6/version.c
-        src/main/cpp/n2n_v2_ipv6/aes.c
-        src/main/cpp/n2n_v2_ipv6/sha.c
-        src/main/cpp/n2n_v2_ipv6/twofish.c
-        src/main/cpp/n2n_v2_ipv6/speck.c
-        src/main/cpp/n2n_v2_ipv6/pearson.c
-        src/main/cpp/n2n_v2_ipv6/cc20.c
-        src/main/cpp/n2n_v2_ipv6/transform_null.c
-        src/main/cpp/n2n_v2_ipv6/transform_tf.c
-        src/main/cpp/n2n_v2_ipv6/transform_aes.c
-        src/main/cpp/n2n_v2_ipv6/transform_cc20.c
-        src/main/cpp/n2n_v2_ipv6/transform_speck.c
-        src/main/cpp/n2n_v2_ipv6/n2n_keyfile.c
-        src/main/cpp/n2n_v2_ipv6/minilzo.c
-        src/main/cpp/n2n_v2_ipv6/upnp.c
+        ${N2N_V2_IPV6_SRC}/n2n.c
+        ${N2N_V2_IPV6_SRC}/wire.c
+        ${N2N_V2_IPV6_SRC}/version.c
+        ${N2N_V2_IPV6_SRC}/aes.c
+        ${N2N_V2_IPV6_SRC}/sha.c
+        ${N2N_V2_IPV6_SRC}/twofish.c
+        ${N2N_V2_IPV6_SRC}/speck.c
+        ${N2N_V2_IPV6_SRC}/pearson.c
+        ${N2N_V2_IPV6_SRC}/cc20.c
+        ${N2N_V2_IPV6_SRC}/transform_null.c
+        ${N2N_V2_IPV6_SRC}/transform_tf.c
+        ${N2N_V2_IPV6_SRC}/transform_aes.c
+        ${N2N_V2_IPV6_SRC}/transform_cc20.c
+        ${N2N_V2_IPV6_SRC}/transform_speck.c
+        ${N2N_V2_IPV6_SRC}/n2n_keyfile.c
+        ${N2N_V2_IPV6_SRC}/minilzo.c
+        ${N2N_V2_IPV6_SRC}/upnp.c
+        ${N2N_V2_IPV6_SRC}/bypass.c
+        ${N2N_V2_IPV6_SRC}/ikcp.c
+        ${N2N_V2_IPV6_SRC}/ws.c
         src/main/cpp/edge_jni/edge_v2_ipv6_embedded.c
         src/main/cpp/edge_jni/tuntap_android_v2_ipv6.c
         src/main/cpp/edge_jni/edge_android_v2_ipv6.c
         src/main/cpp/edge_jni/ifaddrs_android_v2_ipv6.c
         )
 target_compile_definitions(edge_v2_ipv6 PUBLIC N2N_HAVE_AES N2N_HAVE_CC20 __ANDROID_NDK__)
-target_compile_definitions(edge_v2_ipv6 PRIVATE N2N_VERSION=\"${N2N_V2_IPV6_VERSION}\")
+target_compile_definitions(edge_v2_ipv6 PRIVATE
+        N2N_VERSION=\"${N2N_V2_IPV6_VERSION}\"
+        N2N_VERSION_FULL=\"${N2N_V2_IPV6_VERSION}\"
+        )
 set_target_properties(edge_v2_ipv6 PROPERTIES LINK_FLAGS "-Wl,--wrap=socket -Wl,--wrap=exit -Wl,--wrap=abort -Wl,--wrap=setuid -Wl,--wrap=setgid -Wl,--wrap=setreuid -Wl,--wrap=setregid")
 target_include_directories(edge_v2_ipv6 PUBLIC
-        src/main/cpp/n2n_v2_ipv6
+        ${N2N_V2_IPV6_ROOT}
+        ${N2N_V2_IPV6_SRC}
         src/main/cpp/tun2tap
         src/main/cpp/uip
         )

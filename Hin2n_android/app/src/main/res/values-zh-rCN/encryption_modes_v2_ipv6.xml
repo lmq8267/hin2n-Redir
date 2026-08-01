@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="encryption_modes_v2_ipv6">
+        <item>禁用</item>
+        <item>Twofish</item>
+        <item>AES-CBC</item>
+        <item>ChaCha20</item>
+        <item>Speck-CTR</item>
+    </string-array>
+</resources>

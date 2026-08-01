@@ -30,12 +30,15 @@ public class EdgeCmd {
     public String logPath;
     public String encryptionMode;
     public boolean headerEnc;
+    public String bypassPort; // v2-ipv6: optional local proxy ("bypass") port
+    public boolean bypassEnabled; // v2-ipv6: upstream -b
+    public boolean gamingMode; // v2-ipv6: upstream -G gaming mode
 
     public EdgeCmd(int edgeType, int ipMode, String ipAddr, String ipNetmask, String[] supernodes, String community,
                    String encKey, String devDesc, String encKeyFile, String macAddr, int mtu, String localIP, int holePunchInterval,
                    boolean reResoveSupernodeIP, int localPort, boolean allowRouting, boolean dropMuticast,
                    boolean httpTunnel, int traceLevel, int vpnFd, String logPath, String gatewayIp, String dnsServer,
-                   String encryptionMode, boolean headerEnc) {
+                   String encryptionMode, boolean headerEnc, String bypassPort, boolean bypassEnabled, boolean gamingMode) {
         this.edgeType = edgeType;
         this.ipMode = ipMode;
         this.ipAddr = ipAddr;
@@ -61,6 +64,9 @@ public class EdgeCmd {
         this.dnsServer = dnsServer;
         this.encryptionMode = encryptionMode;
         this.headerEnc = headerEnc;
+        this.bypassPort = bypassPort;
+        this.bypassEnabled = bypassEnabled;
+        this.gamingMode = gamingMode;
     }
 
     public EdgeCmd(N2NSettingInfo n2NSettingInfo, int vpnFd, String logPath){
@@ -91,6 +97,9 @@ public class EdgeCmd {
         this.dnsServer = n2NSettingInfo.getDnsServer();
         this.encryptionMode = n2NSettingInfo.getEncryptionMode();
         this.headerEnc = n2NSettingInfo.isHeaderEnc();
+        this.bypassPort = n2NSettingInfo.getBypassPort();
+        this.bypassEnabled = n2NSettingInfo.isBypassEnabled();
+        this.gamingMode = n2NSettingInfo.isGamingMode();
     }
 
     public boolean checkValues(Vector<String> invalids) {
@@ -125,7 +134,7 @@ public class EdgeCmd {
         }
         if (localIP != null && !localIP.isEmpty()
                 && !("auto".equals(localIP) && edgeType == 2)
-                && !((edgeType == 4 && checkIPV6Prefix(localIP)) || (edgeType != 4 && checkIPV4(localIP)))) {
+                && !((edgeType == 4 && checkIPV4OrIPV6Prefix(localIP)) || (edgeType != 4 && checkIPV4(localIP)))) {
             invalids.add("localIP");
         }
         if (!checkInt(holePunchInterval, 10, 120)) {
@@ -146,6 +155,10 @@ public class EdgeCmd {
         }
         if (!dnsServer.isEmpty() && !checkIPV4(dnsServer)) {
             invalids.add("dnsServer");
+        }
+        if (edgeType == 4 && bypassEnabled && bypassPort != null && !bypassPort.isEmpty() &&
+                !checkIntString(bypassPort, 1, 65535)) {
+            invalids.add("bypassPort");
         }
 
         return invalids.size() == 0;
@@ -234,6 +247,26 @@ public class EdgeCmd {
             }
             int prefix = Integer.parseInt(split[1]);
             return prefix >= 0 && prefix <= 128 && String.valueOf(prefix).equals(split[1]);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean checkIPV4OrIPV6Prefix(String ipPrefix) {
+        if (ipPrefix == null || ipPrefix.isEmpty()) {
+            return false;
+        }
+        String[] split = ipPrefix.split("/", -1);
+        if (split.length != 2 || split[0].isEmpty() || split[1].isEmpty()) {
+            return false;
+        }
+        try {
+            InetAddress addr = InetAddress.getByName(split[0]);
+            int addressLength = addr.getAddress().length;
+            int prefix = Integer.parseInt(split[1]);
+            int maxPrefix = addressLength == 4 ? 32 : addressLength == 16 ? 128 : -1;
+            return maxPrefix >= 0 && prefix >= 0 && prefix <= maxPrefix &&
+                    String.valueOf(prefix).equals(split[1]);
         } catch (Exception e) {
             return false;
         }
@@ -404,6 +437,15 @@ public class EdgeCmd {
         }
 
         return true;
+    }
+
+    public static boolean checkIntString(String value, int min, int max) {
+        try {
+            int n = Integer.valueOf(value);
+            return String.valueOf(n).equals(value) && checkInt(n, min, max);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 

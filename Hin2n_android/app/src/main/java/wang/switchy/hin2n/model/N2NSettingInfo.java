@@ -40,6 +40,9 @@ public class N2NSettingInfo implements Parcelable {
     String dnsServer;
     String encryptionMode;
     boolean headerEnc;
+    String bypassPort; /* v2-ipv6: optional local proxy ("bypass") port */
+    boolean bypassEnabled; /* v2-ipv6: upstream -b */
+    boolean gamingMode; /* v2-ipv6: upstream -G gaming mode */
 
     public N2NSettingInfo(N2NSettingModel n2NSettingModel) {
         this.id = n2NSettingModel.getId();
@@ -68,6 +71,9 @@ public class N2NSettingInfo implements Parcelable {
         this.dnsServer = n2NSettingModel.getDnsServer();
         this.encryptionMode = n2NSettingModel.getEncryptionMode();
         this.headerEnc = n2NSettingModel.getHeaderEnc();
+        this.bypassPort = n2NSettingModel.getBypassPort();
+        this.bypassEnabled = n2NSettingModel.getBypassEnabled();
+        this.gamingMode = n2NSettingModel.getGamingMode();
     }
 
     protected N2NSettingInfo(Parcel in) {
@@ -97,6 +103,9 @@ public class N2NSettingInfo implements Parcelable {
         dnsServer = in.readString();
         encryptionMode = in.readString();
         headerEnc = in.readByte() != 0;
+        bypassPort = in.readString();
+        bypassEnabled = in.readByte() != 0;
+        gamingMode = in.readByte() != 0;
     }
 
     public static final Creator<N2NSettingInfo> CREATOR = new Creator<N2NSettingInfo>() {
@@ -297,6 +306,30 @@ public class N2NSettingInfo implements Parcelable {
         this.headerEnc = headerEnc;
     }
 
+    public String getBypassPort() {
+        return bypassPort;
+    }
+
+    public void setBypassPort(String bypassPort) {
+        this.bypassPort = bypassPort;
+    }
+
+    public boolean isBypassEnabled() {
+        return bypassEnabled;
+    }
+
+    public void setBypassEnabled(boolean bypassEnabled) {
+        this.bypassEnabled = bypassEnabled;
+    }
+
+    public boolean isGamingMode() {
+        return gamingMode;
+    }
+
+    public void setGamingMode(boolean gamingMode) {
+        this.gamingMode = gamingMode;
+    }
+
     @Override
     public String toString() {
         return "N2NSettingInfo{" +
@@ -326,6 +359,9 @@ public class N2NSettingInfo implements Parcelable {
                 ", dnsServer=" + dnsServer +
                 ", encryptionMode=" + encryptionMode +
                 ", headerEnc=" + headerEnc +
+                ", bypassPort='" + bypassPort + '\'' +
+                ", bypassEnabled=" + bypassEnabled +
+                ", gamingMode=" + gamingMode +
                 '}';
     }
 
@@ -366,5 +402,8 @@ public class N2NSettingInfo implements Parcelable {
         parcel.writeString(dnsServer);
         parcel.writeString(encryptionMode);
         parcel.writeByte((byte) (headerEnc ? 2 : 0));
+        parcel.writeString(bypassPort);
+        parcel.writeByte((byte) (bypassEnabled ? 1 : 0));
+        parcel.writeByte((byte) (gamingMode ? 1 : 0));
     }
 }

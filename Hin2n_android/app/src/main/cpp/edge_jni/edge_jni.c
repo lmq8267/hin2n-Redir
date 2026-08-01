@@ -452,7 +452,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "encryptionMode = %s", cmd->encryption_mode);
 #endif /* #ifndef NDEBUG */
     }
-    // httpTunnel; v2_ipv6 reuses this field to store "force IPv6 supernode DNS".
+    // httpTunnel; v2_ipv6 reuses this field to select the supernode DNS family.
     if (status.edge_type == EDGE_TYPE_V1 || status.edge_type == EDGE_TYPE_V2_IPV6) {
         jboolean jbHttpTunnel = (*env)->GetBooleanField(env, jcmd,
                                                         (*env)->GetFieldID(env, cls, "httpTunnel",
@@ -510,7 +510,7 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "devDesc = %s", cmd->devDesc);
 #endif /* #ifndef NDEBUG */
     }
-    // headerEnc
+    // headerEnc; v2_ipv6 reuses this field for WebSocket/TCP relay mode.
     {
         jboolean jbHeaderEnc = (*env)->GetBooleanField(env, jcmd, (*env)->GetFieldID(env, cls,
                                                                                         "headerEnc",
@@ -518,6 +518,43 @@ int GetEdgeCmd(JNIEnv *env, jobject jcmd, n2n_edge_cmd_t *cmd) {
         cmd->header_encryption = jbHeaderEnc ? 2 : 0;
 #ifndef NDEBUG
         __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "headerEnc = %d", cmd->header_encryption);
+#endif /* #ifndef NDEBUG */
+    }
+    // bypassPort (v2-ipv6: optional local proxy port for -b)
+    {
+        jstring jsBypassPort = (*env)->GetObjectField(env, jcmd, (*env)->GetFieldID(env, cls,
+                                                                                    "bypassPort",
+                                                                                    "Ljava/lang/String;"));
+        if (jsBypassPort) {
+            const char *bypassPort = (*env)->GetStringUTFChars(env, jsBypassPort, NULL);
+            if (bypassPort) {
+                strncpy(cmd->bypass_port, bypassPort, sizeof(cmd->bypass_port) - 1);
+                cmd->bypass_port[sizeof(cmd->bypass_port) - 1] = '\0';
+                (*env)->ReleaseStringUTFChars(env, jsBypassPort, bypassPort);
+#ifndef NDEBUG
+                __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "bypassPort = %s", cmd->bypass_port);
+#endif /* #ifndef NDEBUG */
+            }
+        }
+    }
+    // bypassEnabled; v2_ipv6 passes -b with an optional port.
+    {
+        jboolean jbBypassEnabled = (*env)->GetBooleanField(env, jcmd, (*env)->GetFieldID(env, cls,
+                                                                                         "bypassEnabled",
+                                                                                         "Z"));
+        cmd->bypass_enabled = jbBypassEnabled ? 1 : 0;
+#ifndef NDEBUG
+        __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "bypassEnabled = %d", cmd->bypass_enabled);
+#endif /* #ifndef NDEBUG */
+    }
+    // gamingMode; v2_ipv6 maps this to upstream -G.
+    {
+        jboolean jbGamingMode = (*env)->GetBooleanField(env, jcmd, (*env)->GetFieldID(env, cls,
+                                                                                      "gamingMode",
+                                                                                      "Z"));
+        cmd->gaming_mode = jbGamingMode ? 1 : 0;
+#ifndef NDEBUG
+        __android_log_print(ANDROID_LOG_DEBUG, "edge_jni", "gamingMode = %d", cmd->gaming_mode);
 #endif /* #ifndef NDEBUG */
     }
 
@@ -539,6 +576,7 @@ void InitEdgeStatus(void) {
     status.cmd.vpn_fd = -1;
     status.cmd.logpath = NULL;
     status.cmd.header_encryption = 0;
+    status.cmd.gaming_mode = 0;
 
     status.tid = -1;
     status.jvm = NULL;

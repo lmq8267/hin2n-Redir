@@ -116,6 +116,9 @@ static const char *encryption_mode_arg(const char *mode, const char *key) {
     if (!key || key[0] == '\0') {
         return "1";
     }
+    if (mode && strcmp(mode, "Disable") == 0) {
+        return "1";
+    }
     if (mode && strcmp(mode, "AES-CBC") == 0) {
         return "3";
     }
@@ -125,7 +128,7 @@ static const char *encryption_mode_arg(const char *mode, const char *key) {
     if (mode && strcmp(mode, "Speck-CTR") == 0) {
         return "5";
     }
-    return "2";
+    return "4";
 }
 
 static int prefix_from_netmask(const char *netmask) {
@@ -222,7 +225,9 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     pthread_mutex_unlock(&g_status->mutex);
     g_status->report_edge_status();
 
-    snprintf(ip_arg, sizeof(ip_arg), "static:%s/%d", cmd->ip_addr, prefix_from_netmask(cmd->ip_netmask));
+    /* v2.3_7.x: -a auto-detects address family, the "static:" mode prefix is no longer
+     * parseable (it contains ':' and would be treated as an IPv6 address). */
+    snprintf(ip_arg, sizeof(ip_arg), "%s/%d", cmd->ip_addr, prefix_from_netmask(cmd->ip_netmask));
     if (cmd->mtu > 0) {
         snprintf(mtu_arg, sizeof(mtu_arg), "%u", cmd->mtu);
     }
@@ -237,7 +242,9 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
         argv[argc++] = ip_arg;
     }
     if (cmd->local_ip[0] != '\0') {
-        argv[argc++] = "-A";
+        /* v2.3_7.x: IPv6 address is passed via -a (contains ':' so it is auto-detected);
+         * -A was repurposed as the encryption mode selector. */
+        argv[argc++] = "-a";
         argv[argc++] = cmd->local_ip;
     }
     argv[argc++] = "-c";
@@ -247,8 +254,21 @@ int start_edge_v2_ipv6(n2n_edge_status_t *status) {
     } else if (cmd->re_resolve_supernode_ip) {
         argv[argc++] = "-4";
     }
-    argv[argc++] = "-B";
+    if (cmd->header_encryption) {
+        argv[argc++] = "-w";
+    }
+    if (cmd->gaming_mode) {
+        argv[argc++] = "-G";
+    }
+    argv[argc++] = "-A";
     argv[argc++] = (char *)encryption_mode_arg(cmd->encryption_mode, cmd->enc_key);
+    /* v2.3_7.x bypass: -b enables the default port, or accepts an explicit port. */
+    if (cmd->bypass_enabled) {
+        argv[argc++] = "-b";
+        if (cmd->bypass_port[0] != '\0') {
+            argv[argc++] = cmd->bypass_port;
+        }
+    }
     if (cmd->enc_key && cmd->enc_key[0]) {
         argv[argc++] = "-k";
         argv[argc++] = cmd->enc_key;

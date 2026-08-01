@@ -51,6 +51,9 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         public final static Property DnsServer = new Property(24, String.class, "dnsServer", false, "DNS_SERVER");
         public final static Property EncryptionMode = new Property(25, String.class, "encryptionMode", false, "ENCRYPTION_MODE");
         public final static Property HeaderEnc = new Property(26, boolean.class, "headerEnc", false, "HEADER_ENC");
+        public final static Property BypassPort = new Property(27, String.class, "bypassPort", false, "BYPASS_PORT");
+        public final static Property GamingMode = new Property(28, boolean.class, "gamingMode", false, "GAMING_MODE");
+        public final static Property BypassEnabled = new Property(29, boolean.class, "bypassEnabled", false, "BYPASS_ENABLED");
     }
 
 
@@ -92,7 +95,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
                 "\"GATEWAY_IP\" TEXT," + // 23: gatewayIp
                 "\"DNS_SERVER\" TEXT," + // 24: dnsServer
                 "\"ENCRYPTION_MODE\" TEXT ," + // 25: encryptionMode
-                "\"HEADER_ENC\" INTEGER NOT NULL);"); // 26: headerEnc
+                "\"HEADER_ENC\" INTEGER NOT NULL ," + // 26: headerEnc
+                "\"BYPASS_PORT\" TEXT," + // 27: bypassPort
+                "\"GAMING_MODE\" INTEGER NOT NULL ," + // 28: gamingMode
+                "\"BYPASS_ENABLED\" INTEGER NOT NULL);"); // 29: bypassEnabled
     }
 
     /** Drops the underlying database table. */
@@ -187,6 +193,13 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
             stmt.bindString(26, encryptionMode);
         }
         stmt.bindLong(27, entity.getHeaderEnc() ? 1L: 0L);
+
+        String bypassPort = entity.getBypassPort();
+        if (bypassPort != null) {
+            stmt.bindString(28, bypassPort);
+        }
+        stmt.bindLong(29, entity.getGamingMode() ? 1L: 0L);
+        stmt.bindLong(30, entity.getBypassEnabled() ? 1L: 0L);
     }
 
     @Override
@@ -275,6 +288,13 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
             stmt.bindString(26, encryptionMode);
         }
         stmt.bindLong(27, entity.getHeaderEnc() ? 1L: 0L);
+
+        String bypassPort = entity.getBypassPort();
+        if (bypassPort != null) {
+            stmt.bindString(28, bypassPort);
+        }
+        stmt.bindLong(29, entity.getGamingMode() ? 1L: 0L);
+        stmt.bindLong(30, entity.getBypassEnabled() ? 1L: 0L);
     }
 
     @Override
@@ -311,7 +331,10 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
             cursor.isNull(offset + 23) ? null : cursor.getString(offset + 23), // gatewayIp
             cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24), // dnsServer
             cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25), // encryptionMode
-            cursor.getShort(offset + 26) != 0 // headerEnc
+            cursor.getShort(offset + 26) != 0, // headerEnc
+            cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27), // bypassPort
+            cursor.getShort(offset + 28) != 0, // gamingMode
+            cursor.getShort(offset + 29) != 0 // bypassEnabled
         );
         return entity;
     }
@@ -345,6 +368,9 @@ public class N2NSettingModelDao extends AbstractDao<N2NSettingModel, Long> {
         entity.setDnsServer(cursor.isNull(offset + 24) ? null : cursor.getString(offset + 24));
         entity.setEncryptionMode(cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25));
         entity.setHeaderEnc(cursor.getShort(offset + 26) != 0);
+        entity.setBypassPort(cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27));
+        entity.setGamingMode(cursor.getShort(offset + 28) != 0);
+        entity.setBypassEnabled(cursor.getShort(offset + 29) != 0);
      }
     
     @Override
