@@ -85,7 +85,15 @@ static void tick_arp_timer(void) {
     }
 }
 
-static int clear_nonblock(int fd) {
+/* Ensure the VPN fd stays non-blocking.
+ *
+ * edge.c's readFromTAPSocket() drains the TAP with back-to-back tuntap_read()
+ * calls that bypass select() and assume "TAP is non-blocking now" (see
+ * readFromTAPSocket drain loop). A blocking fd hangs the main loop in read()
+ * and never returns to the while(keep_running && g_edge_running) stop check —
+ * that was the v2-ipv6 "stop hangs ~20s" bug. VpnService fds default to
+ * O_NONBLOCK; make it explicit so nothing regresses it. */
+static int set_nonblock(int fd) {
     int val;
 
     if (fd < 0) {
@@ -96,8 +104,8 @@ static int clear_nonblock(int fd) {
     if (val == -1) {
         return -1;
     }
-    if ((val & O_NONBLOCK) == O_NONBLOCK) {
-        val &= ~O_NONBLOCK;
+    if ((val & O_NONBLOCK) == 0) {
+        val |= O_NONBLOCK;
         if (fcntl(fd, F_SETFL, val) == -1) {
             return -1;
         }
@@ -234,7 +242,7 @@ int tuntap_open(tuntap_dev *device, struct tuntap_config *config) {
     } else if (g_status->cmd.vpn_fd < 0) {
         g_status->cmd.vpn_fd = establish_vpn_service(config);
     }
-    if (g_status->cmd.vpn_fd < 0 || clear_nonblock(g_status->cmd.vpn_fd) < 0) {
+    if (g_status->cmd.vpn_fd < 0 || set_nonblock(g_status->cmd.vpn_fd) < 0) {
         return -1;
     }
 
@@ -351,7 +359,7 @@ int set_ipaddress(const tuntap_dev *device, int static_address) {
 
     vpn_fd = establish_vpn_service_ip(mutable_device->ip_addr, mutable_device->ip_prefixlen,
                                       &mutable_device->ip6_addr, mutable_device->ip6_prefixlen);
-    if (vpn_fd < 0 || clear_nonblock(vpn_fd) < 0) {
+    if (vpn_fd < 0 || set_nonblock(vpn_fd) < 0) {
         if (vpn_fd >= 0) {
             close(vpn_fd);
         }
